@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:p_chat/splash_view.dart';
+import 'package:p_chat/srorage/pref_storage.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // To avoid screen rotation
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+  // Initializing Local storage
+  await Pref.init();
   runApp(const MyApp());
 }
 

@@ -1,9 +1,9 @@
 
 
-class ForgotPasswordModel {
+class ResendEmailModel {
   final String email;
 
-  ForgotPasswordModel(
+  ResendEmailModel(
       {required this.email,});
 
   Map<String, dynamic> toJson() {
@@ -11,5 +11,4 @@ class ForgotPasswordModel {
       'email': email,
     };
   }
-
 }

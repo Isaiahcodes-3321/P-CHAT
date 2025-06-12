@@ -1,17 +1,17 @@
 import 'package:http/http.dart' as http;
-import 'package:p_chat/models/forgot_password_model.dart';
+import 'package:p_chat/models/resend_email_otp.dart';
 import 'export.dart';
 
-class ForgotPasswordApi {
-  static Future<void> userRegistration(WidgetRef ref,
-      ForgotPasswordModel forgotPasswordModel, BuildContext context) async {
+class ResendEmailOtpApi {
+  static Future<void> resendOtp(WidgetRef ref, ResendEmailModel resendOtpModel,
+      BuildContext context) async {
     final response = await http
         .post(
-          Uri.parse(forgotPasswordEndpoint),
+          Uri.parse(resendVerifyEmailEndpoint),
           headers: {
             'Content-Type': 'application/json',
           },
-          body: jsonEncode(forgotPasswordModel.toJson()),
+          body: jsonEncode(resendOtpModel.toJson()),
         )
         .timeout(const Duration(seconds: 50));
 
@@ -19,7 +19,8 @@ class ForgotPasswordApi {
     JsonEncoder encoder = const JsonEncoder.withIndent('  ');
     String prettyprint = encoder.convert(responseData);
     final message = responseData['message'];
-    debugPrint('Response on forgot Password $prettyprint');
+        debugPrint('Response on resend email otp $prettyprint');
+
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       EndpointUpdateUI.updateUi(message, ref, context);
