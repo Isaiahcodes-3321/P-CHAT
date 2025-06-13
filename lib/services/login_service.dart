@@ -1,5 +1,5 @@
-
 import 'package:http/http.dart' as http;
+import 'package:p_chat/screens/chat_screen/chat_view.dart';
 import 'export.dart';
 
 
@@ -19,17 +19,34 @@ class LoginApi {
     final Map<String, dynamic> responseData = json.decode(response.body);
     JsonEncoder encoder = const JsonEncoder.withIndent('  ');
     String prettyprint = encoder.convert(responseData);
-    final message = responseData['message'];
-        debugPrint('Response on login $prettyprint');
+    
+    String message;
+    if (responseData.containsKey('detail') && responseData['detail'] is Map && responseData['detail'].containsKey('message')) {
+      message = responseData['detail']['message'];
+    } else if (responseData.containsKey('message')) {
+      message = responseData['message'];
+    } else {
+      message = 'Unknown error occurred';
+    }
 
+    debugPrint('Response on login $prettyprint');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
+      Navigator.pushReplacement<void, void>(
+        context,
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const ChatView(),
+        ),
+      );
       EndpointUpdateUI.updateUi(message, ref, context);
     } else {
+      debugPrint('Failed ${response.statusCode}');
       EndpointUpdateUI.updateUi(message, ref, context);
+      debugPrint('Failed ${response.statusCode}');
     }
   }
 }
+
 
 class EndpointUpdateUI {
   static updateUi(String message, WidgetRef ref, BuildContext context) {

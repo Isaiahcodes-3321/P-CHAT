@@ -1,10 +1,8 @@
 class ResetPasswordModel {
   final String emailOtp;
-  final String email;
   final String confirmPassword;
 
-  ResetPasswordModel(
-      {required this.emailOtp, required this.email, required this.confirmPassword});
+  ResetPasswordModel({required this.emailOtp, required this.confirmPassword});
 
   Map<String, dynamic> toJson() {
     return {

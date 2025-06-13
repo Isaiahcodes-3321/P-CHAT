@@ -35,9 +35,9 @@ class _TextInputPasswordState extends State<TextInputPassword> {
   @override
   Widget build(BuildContext context) {
     var textStyle = AppText.textStyle(FontWeight.w400,
-        fontSize: FontSize.font14, color: AppColor.colorBlack);
+        fontSize: FontSize.font14, color: AppColor.colorWhite);
     var hintTextStyle = AppText.textStyle(FontWeight.w400,
-        fontSize: FontSize.font14, color: AppColor.colorBlack);
+        fontSize: FontSize.font14, color: AppColor.colorWhite);
     return SizedBox(
       height: 50,
       child: TextFormField(
@@ -49,6 +49,8 @@ class _TextInputPasswordState extends State<TextInputPassword> {
         decoration: InputDecoration(
           hintText: widget.hintText,
           hintStyle: hintTextStyle,
+          filled: true,
+          fillColor: AppColor.colorBlueBlack,
           suffixIcon: IconButton(
             icon: widget.icon,
             color: AppColor.colorLightGray,
@@ -91,9 +93,9 @@ class TextInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var textStyle = AppText.textStyle(FontWeight.w400,
-        fontSize: FontSize.font14, color: AppColor.colorBlack);
+        fontSize: FontSize.font14, color: AppColor.colorWhite);
     var hintTextStyle = AppText.textStyle(FontWeight.w400,
-        fontSize: FontSize.font14, color: AppColor.colorLightGray);
+        fontSize: FontSize.font14, color: AppColor.colorWhite);
 
     return SizedBox(
       height: 50,
@@ -105,19 +107,21 @@ class TextInput extends StatelessWidget {
         enabled: enabled,
         decoration: InputDecoration(
           hintText: hintText,
+          filled: true,
+          fillColor: AppColor.colorBlueBlack,
           hintStyle: hintTextStyle,
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide:
-                  BorderSide(color: AppColor.colorLightGray, width: 1.2)),
+                  const BorderSide(color: AppColor.colorBlueBlack, width: 1.2)),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide:
-                  BorderSide(color: AppColor.colorLightGray, width: 1.2)),
+                  const BorderSide(color: AppColor.colorBlueBlack, width: 1.2)),
           disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
-                  color: AppColor.colorLightGray.withOpacity(0.5), width: 1.2)),
+                  color: AppColor.colorBlueBlack.withOpacity(0.5), width: 1.2)),
         ),
         validator: validate,
       ),

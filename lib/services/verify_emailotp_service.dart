@@ -1,13 +1,11 @@
-
-
-
 import 'package:http/http.dart' as http;
 import 'package:p_chat/models/verify_emailotp_model.dart';
+import 'package:p_chat/screens/auth_screen/login_view.dart';
 import 'export.dart';
 
 class VerifyEmailOtpApi {
-  static Future<void> verifyOtp(
-      WidgetRef ref,  VerifyEmailOtpModel verifyMailOtpModel, BuildContext context) async {
+  static Future<void> verifyOtp(WidgetRef ref,
+      VerifyEmailOtpModel verifyMailOtpModel, BuildContext context) async {
     final response = await http
         .post(
           Uri.parse(verifyOTPEndpoint),
@@ -25,6 +23,12 @@ class VerifyEmailOtpApi {
     debugPrint('Response on verify email otp $prettyprint');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
+      Navigator.pushReplacement<void, void>(
+        context,
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const LoginView(),
+        ),
+      );
       EndpointUpdateUI.updateUi(message, ref, context);
     } else {
       EndpointUpdateUI.updateUi(message, ref, context);

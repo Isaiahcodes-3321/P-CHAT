@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:p_chat/models/reset_password_model.dart';
+import 'package:p_chat/screens/auth_screen/login_view.dart';
 import 'export.dart';
 
 class ResetPasswordApi {
@@ -21,6 +22,12 @@ class ResetPasswordApi {
     final message = responseData['message'];
     debugPrint('Response on resetPassword $prettyprint');
     if (response.statusCode == 200 || response.statusCode == 201) {
+      Navigator.pushReplacement<void, void>(
+        context,
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const LoginView(),
+        ),
+      );
       EndpointUpdateUI.updateUi(message, ref, context);
     } else {
       EndpointUpdateUI.updateUi(message, ref, context);
