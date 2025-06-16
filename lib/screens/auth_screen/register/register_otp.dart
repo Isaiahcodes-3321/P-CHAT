@@ -1,3 +1,5 @@
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/models/verify_emailotp_model.dart';
 import 'package:p_chat/screens/auth_screen/export.dart';
 import 'package:p_chat/services/verify_emailotp_service.dart';
@@ -71,15 +73,20 @@ class _RegisterOtpViewState extends ConsumerState<RegisterOtpView> {
             width: 100.w,
             height: 7.h,
             onPres: () {
+              ref.read(loadingAnimationSpinkit.notifier).state = true;
               final data = VerifyEmailOtpModel(otp: pinController.text);
               VerifyEmailOtpApi.verifyOtp(ref, data, context);
             },
-            widget: AppText.boldText(
-              'Verify',
-              FontWeight.bold,
-              fontSize: FontSize.font16,
-              color: AppColor.colorWhite,
-            ),
+            widget: ref.watch(loadingAnimationSpinkit)
+                ? const SpinKitCircle(
+                    color: AppColor.colorWhite,
+                  )
+                : AppText.boldText(
+                    'Verify',
+                    FontWeight.bold,
+                    fontSize: FontSize.font16,
+                    color: AppColor.colorWhite,
+                  ),
           )
         ]));
   }

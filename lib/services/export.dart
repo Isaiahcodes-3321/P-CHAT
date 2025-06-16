@@ -5,3 +5,7 @@ export 'dart:convert';
 export 'package:flutter/material.dart';
 export 'package:flutter_riverpod/flutter_riverpod.dart';
 export 'package:p_chat/services/login_service.dart';
+export 'dart:io';
+export 'package:p_chat/global_content/global_varable.dart';
+export 'package:p_chat/screens/chat_screen/chat_view.dart';
+export 'package:p_chat/srorage/pref_storage.dart';

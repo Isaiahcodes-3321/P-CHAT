@@ -1,3 +1,5 @@
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:p_chat/global_content/internet_checks.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/models/registration_model.dart';
 import 'package:p_chat/screens/auth_screen/login_view.dart';
@@ -160,19 +162,34 @@ class _RegisterInputsState extends ConsumerState<RegisterInputs> {
                   _passwordController.text.isEmpty) {
                 SnackBarView.showSnackBar(context, "All input are required");
               } else {
-                final data = RegisterModel(
-                    fullName: _fullNameController.text,
-                    email: _emailController.text,
-                    password: _passwordController.text);
-                RegistrationApi.userRegistration(ref, data, context);
+                if (_passwordController.text.length < 8) {
+                  SnackBarView.showSnackBar(
+                      context, "Password length must be 8 and above");
+                } else {
+                  InternetChecks.loginInternetCheck(ref, context);
+                  Future.delayed(const Duration(seconds: 1), () async {
+                    if (ref.watch(isUserConnected)) {
+                      ref.read(loadingAnimationSpinkit.notifier).state = true;
+                      final data = RegisterModel(
+                          fullName: _fullNameController.text,
+                          email: _emailController.text,
+                          password: _passwordController.text);
+                      RegistrationApi.userRegistration(ref, data, context);
+                    }
+                  });
+                }
               }
             },
-            widget: AppText.boldText(
-              'Register',
-              FontWeight.bold,
-              fontSize: FontSize.font16,
-              color: AppColor.colorWhite,
-            ),
+            widget: ref.watch(loadingAnimationSpinkit)
+                ? const SpinKitCircle(
+                    color: AppColor.colorWhite,
+                  )
+                : AppText.boldText(
+                    'Register',
+                    FontWeight.bold,
+                    fontSize: FontSize.font16,
+                    color: AppColor.colorWhite,
+                  ),
           )
         ],
       ),

@@ -1,3 +1,5 @@
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/models/reset_password_model.dart';
 import 'package:p_chat/screens/auth_screen/export.dart';
 import 'package:p_chat/services/reset_password_service.dart';
@@ -122,14 +124,19 @@ class _RegisterInputsState extends ConsumerState<RegisterInputs> {
                 emailOtp: _emailOtpController.text,
                 confirmPassword: _passwordController.text,
               );
+              ref.read(loadingAnimationSpinkit.notifier).state = true;
               ResetPasswordApi.resetPassword(ref, data, context);
             },
-            widget: AppText.boldText(
-              'Continue',
-              FontWeight.bold,
-              fontSize: FontSize.font16,
-              color: AppColor.colorWhite,
-            ),
+            widget: ref.watch(loadingAnimationSpinkit)
+                ? const SpinKitCircle(
+                    color: AppColor.colorWhite,
+                  )
+                : AppText.boldText(
+                    'Continue',
+                    FontWeight.bold,
+                    fontSize: FontSize.font16,
+                    color: AppColor.colorWhite,
+                  ),
           )
         ],
       ),

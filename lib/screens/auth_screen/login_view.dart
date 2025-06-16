@@ -1,10 +1,12 @@
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:p_chat/global_content/global_varable.dart';
 import 'package:p_chat/global_content/internet_checks.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/models/login_model.dart';
 import 'package:p_chat/screens/auth_screen/forgot_password/forgot_password_email.dart';
 import 'package:p_chat/screens/auth_screen/register/registration.dart';
 import 'package:p_chat/services/login_service.dart';
+import 'package:p_chat/srorage/pref_storage.dart';
 import 'export.dart';
 
 class LoginView extends ConsumerStatefulWidget {
@@ -101,8 +103,34 @@ class LoginInputs extends ConsumerStatefulWidget {
 }
 
 class _LoginInputsState extends ConsumerState<LoginInputs> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _loadLoginCredentials();
+  }
+
+  String? getUserPass;
+  String? getUserEmail;
+  bool? isSaveRememberPassword;
+
   bool _passwordVisible = true;
   bool _rememberPassword = false;
+
+  Future<void> _loadLoginCredentials() async {
+    getUserEmail = await Pref.getStringValue(rememberEmailKey);
+    getUserPass = await Pref.getStringValue(rememberPasswordKey);
+    isSaveRememberPassword =
+        await Pref.getBoolValue(rememberLoginCredentialBoolValueKey);
+
+    setState(() {
+      _emailController.text = getUserEmail ?? '';
+      _passwordController.text = getUserPass ?? '';
+
+      _rememberPassword = isSaveRememberPassword ?? false;
+      // _rememberPassword = getUserEmail != null && getUserPass != null ;
+    });
+  }
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -167,6 +195,11 @@ class _LoginInputsState extends ConsumerState<LoginInputs> {
                 onChanged: (bool? newValue) {
                   setState(() {
                     _rememberPassword = newValue!;
+                    ref
+                        .read(LoginApi.isRememberPasswordActivated.notifier)
+                        .state = _rememberPassword;
+
+                    debugPrint(' remember value its $_rememberPassword');
                   });
                 },
                 checkColor: AppColor.colorWhite,
@@ -202,10 +235,12 @@ class _LoginInputsState extends ConsumerState<LoginInputs> {
                 Future.delayed(const Duration(seconds: 1), () async {
                   if (ref.watch(isUserConnected)) {
                     ref.read(loadingAnimationSpinkit.notifier).state = true;
-
                     final data = LoginModel(
                         email: _emailController.text,
                         password: _passwordController.text);
+                    ref
+                        .read(LoginApi.isRememberPasswordActivated.notifier)
+                        .state = _rememberPassword;
                     LoginApi.userLogin(ref, data, context);
                   }
                 });
