@@ -4,10 +4,13 @@ import 'package:grouped_list/grouped_list.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:p_chat/global_content/app_color.dart';
 import 'package:p_chat/global_content/global_varable.dart';
+import 'package:p_chat/screens/widgets/text_widget.dart';
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:http_parser/http_parser.dart';
+// import 'package:path/path.dart' as p;
 import 'package:p_chat/services/all_endpoint.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
 
@@ -104,22 +107,52 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
   Future<String?> _uploadPdfToServer(File file, String fileName) async {
     String token = await Pref.getStringValue(tokenKey);
     String yourToken = token.trim();
-    debugPrint('User token its : $yourToken');
-    debugPrint(' Uploading file now \n File name its $fileName');
+    debugPrint('User token is: $yourToken');
+    debugPrint('Uploading file now \nFile name is $fileName');
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(uploadPdfEndpoint));
       request.headers['Authorization'] = 'Bearer $yourToken';
-      request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          file.path,
+          filename: fileName,
+          contentType: MediaType('application', 'pdf'),
+        ),
+      );
+      debugPrint(
+          'Sending file to backend as application.pdf (with explicit Content-Type)');
       var response = await request.send();
       final responseData = await response.stream.bytesToString();
       debugPrint('PDF Upload Response Status: ${response.statusCode}');
       debugPrint('PDF Upload Response Body: $responseData');
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonResponse = json.decode(responseData);
-        return jsonResponse['pdfId'];
+        try {
+          final Map<String, dynamic> jsonResponse = json.decode(responseData);
+        
+
+          String docId = jsonResponse['data']['doc_id'].toString();
+          debugPrint('Extracted doc_id from JSON: $docId');
+          return docId;
+        } catch (e) {
+          debugPrint(
+              'JSON parsing or key access failed. Attempting to treat response as plain string (doc_id). Error: $e');
+          String potentialDocId = responseData.trim();
+          if (potentialDocId.isNotEmpty) {
+            debugPrint('Returning plain string as doc_id: $potentialDocId');
+            return potentialDocId;
+          } else {
+            debugPrint('Response was empty or not a valid doc_id string.');
+            return null;
+          }
+        }
+      } else {
+        debugPrint(
+            'Server responded with non-success status. Error details: $responseData');
+        return null;
       }
-      return null;
     } catch (e) {
       debugPrint('Upload error: $e');
       return null;
@@ -303,9 +336,11 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
         Expanded(
           child: messages.isEmpty
               ? Center(
-                  child: Text(
+                  child: AppText.boldText(
                     'Upload a PDF and start chatting!',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    FontWeight.bold,
+                    fontSize: FontSize.font20,
+                    color: AppColor.colorWhite,
                   ),
                 )
               : GroupedListView<Message, String>(
