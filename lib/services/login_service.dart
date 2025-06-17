@@ -39,12 +39,19 @@ class LoginApi {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final tokenData = responseData['data']['token'] as Map<String, dynamic>;
+        final userData = responseData['data']['user'] as Map<String, dynamic>;
+        String userId = userData['id'] as String;
+        String userName = userData['fullname'] as String;
+
         String accessToken = tokenData['access_token'] as String;
         String refreshToken = tokenData['refresh_token'] as String;
 
         // debugPrint(' Access token its $accessToken');
+        debugPrint('User Name its $userName');
         Pref.setStringValue(tokenKey, accessToken);
         Pref.setStringValue(refreshTokenKey, refreshToken);
+        Pref.setStringValue(userIdKey, userId);
+        Pref.setStringValue(userNameKey, userName);
 
         if (ref.watch(isRememberPasswordActivated)) {
           Pref.setStringValue(rememberPasswordKey, loginModel.password);

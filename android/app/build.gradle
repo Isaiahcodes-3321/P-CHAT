@@ -7,7 +7,8 @@ plugins {
 
 android {
     namespace = "com.example.p_chat"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
+    // flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

@@ -4,6 +4,7 @@ import 'package:p_chat/global_content/app_color.dart';
 import 'package:p_chat/global_content/global_varable.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/screens/auth_screen/login_view.dart';
+import 'package:p_chat/screens/chat_screen/chat_input.dart';
 import 'package:p_chat/screens/widgets/text_widget.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
 
@@ -18,12 +19,26 @@ class _ChatViewState extends ConsumerState<ChatView> {
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 12) {
-      return 'Good morning';
+      return 'morning ${ref.watch(ProviderUserDetails.holdUserName)}';
     } else if (hour >= 12 && hour < 16) {
-      return 'Good afternoon';
+      return 'afternoon ${ref.watch(ProviderUserDetails.holdUserName)}';
     } else {
-      return 'Good evening';
+      return 'evening ${ref.watch(ProviderUserDetails.holdUserName)}';
     }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getUserInfo();
+  }
+
+  getUserInfo() async {
+    String getUserId = await Pref.getStringValue(userIdKey);
+    String getUserName = await Pref.getStringValue(userNameKey);
+    ref.read(ProviderUserDetails.holdUserId.notifier).state = getUserId;
+    ref.read(ProviderUserDetails.holdUserName.notifier).state = getUserName;
   }
 
   @override
@@ -31,7 +46,14 @@ class _ChatViewState extends ConsumerState<ChatView> {
     return Scaffold(
       backgroundColor: AppColor.colorBlueBlack,
       appBar: AppBar(
-        leading: SizedBox(),
+        leading: Center(
+          child: AppText.boldText(
+            "  Good",
+            FontWeight.bold,
+            fontSize: FontSize.font20,
+            color: AppColor.colorWhite,
+          ),
+        ),
         title: AppText.boldText(
           _getGreeting(),
           FontWeight.bold,
@@ -63,9 +85,14 @@ class _ChatViewState extends ConsumerState<ChatView> {
           ),
         ],
       ),
-      body: const Center(child: Text('Chat Screen')),
+      body: const SafeArea(child: ChatPreview()),
     );
   }
+}
+
+class ProviderUserDetails {
+  static final holdUserName = StateProvider((ref) => '');
+  static final holdUserId = StateProvider((ref) => '');
 }
 
 class LogOutUser {

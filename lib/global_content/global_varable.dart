@@ -6,3 +6,4 @@ String rememberPasswordKey = 'rememberPassword';
 String rememberEmailKey = 'rememberEmail';
 String userNameKey = 'userName';
 String rememberLoginCredentialBoolValueKey = 'rememberLoginCredenTials';
+String userIdKey = 'userId';
