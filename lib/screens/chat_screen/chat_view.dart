@@ -19,11 +19,11 @@ class _ChatViewState extends ConsumerState<ChatView> {
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 12) {
-      return 'morning ${ref.watch(ProviderUserDetails.holdUserName)}';
+      return 'Morning ${ref.watch(ProviderUserDetails.holdUserName)}';
     } else if (hour >= 12 && hour < 16) {
-      return 'afternoon ${ref.watch(ProviderUserDetails.holdUserName)}';
+      return 'Afternoon ${ref.watch(ProviderUserDetails.holdUserName)}';
     } else {
-      return 'evening ${ref.watch(ProviderUserDetails.holdUserName)}';
+      return 'Evening ${ref.watch(ProviderUserDetails.holdUserName)}';
     }
   }
 

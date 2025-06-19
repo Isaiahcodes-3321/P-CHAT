@@ -4,9 +4,11 @@ import 'package:grouped_list/grouped_list.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:p_chat/global_content/app_color.dart';
 import 'package:p_chat/global_content/global_varable.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
+import 'package:p_chat/screens/chat_screen/chat_view.dart';
 import 'package:p_chat/screens/widgets/text_widget.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -15,8 +17,6 @@ import 'package:http_parser/http_parser.dart';
 import 'package:p_chat/services/all_endpoint.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-
-
 
 class Message {
   final String text;
@@ -185,6 +185,19 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
       if (mounted) {
         SnackBarView.showSnackBar(context, 'Failed to connect to chat: $e');
       }
+    }
+  }
+
+  Future<void> ifTokenHasExpire() async {
+    String token = await Pref.getStringValue(tokenKey);
+    String yourToken = token.trim();
+    bool hasExpired = JwtDecoder.isExpired(yourToken);
+    debugPrint('Have token expire ? : $hasExpired');
+
+    if (hasExpired) {
+      LogOutUser.logUserOut(ref, context);
+    } else {
+      _pickPdfFile();
     }
   }
 
@@ -382,7 +395,9 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
         decoration: BoxDecoration(
-          color: message.isSentByMe ? const Color(0xFF007AFF) : Colors.white,
+          color: message.isSentByMe
+              ? const Color(0xFF007AFF)
+              : AppColor.colorWhite,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
@@ -419,7 +434,8 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                   children: [
                     Icon(
                       Icons.picture_as_pdf,
-                      color: message.isSentByMe ? Colors.white : Colors.red,
+                      color:
+                          message.isSentByMe ? AppColor.colorWhite : Colors.red,
                       size: 16,
                     ),
                     const SizedBox(width: 4),
@@ -427,8 +443,9 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                       child: Text(
                         message.pdfName ?? 'PDF Document',
                         style: TextStyle(
-                          color:
-                              message.isSentByMe ? Colors.white : Colors.black,
+                          color: message.isSentByMe
+                              ? AppColor.colorWhite
+                              : AppColor.colorBlack,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,
@@ -442,7 +459,9 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
               Text(
                 message.text,
                 style: TextStyle(
-                  color: message.isSentByMe ? Colors.white : Colors.black,
+                  color: message.isSentByMe
+                      ? AppColor.colorWhite
+                      : AppColor.colorBlack,
                   fontSize: 16,
                 ),
               ),
@@ -514,18 +533,25 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                 const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColor.colorWhite,
+                  ),
                 ),
                 const SizedBox(width: 12),
-                Text('Processing...',
-                    style: TextStyle(color: Colors.grey[600])),
+                AppText.boldText(
+                  'Processing...',
+                  FontWeight.w500,
+                  fontSize: FontSize.font16,
+                  color: AppColor.colorWhite,
+                ),
               ],
             ),
           ),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColor.colorWhite,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -543,13 +569,14 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                     hintText: uploadedPdfId != null
                         ? 'Type your message here...'
                         : 'Upload PDF to chat',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    hintStyle: const TextStyle(
+                        color: Color.fromARGB(255, 131, 131, 131)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: const Color.fromARGB(216, 160, 166, 185),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 12),
                   ),
@@ -561,17 +588,19 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: isLoading ? null : _pickPdfFile,
+                onTap: isLoading ? null : 
+                ifTokenHasExpire,
+                // _pickPdfFile,
                 child: Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isLoading ? Colors.grey : Colors.blue,
+                    color: isLoading ? Colors.grey : AppColor.colorBlue,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.attach_file,
-                    color: Colors.white,
+                    color: AppColor.colorWhite,
                     size: 24,
                   ),
                 ),
@@ -586,13 +615,13 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                   height: 48,
                   decoration: BoxDecoration(
                     color: isLoading || !_hasText || uploadedPdfId == null
-                        ? Colors.grey
-                        : Colors.blue,
+                        ? const Color.fromARGB(216, 160, 166, 185)
+                        : AppColor.colorBlue,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.send,
-                    color: Colors.white,
+                    color: Color.fromARGB(255, 250, 248, 248),
                     size: 20,
                   ),
                 ),
