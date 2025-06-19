@@ -30,6 +30,14 @@ dependencies:
   file_picker: ^10.2.0
   intl: ^0.20.2
   web_socket_channel: ^3.0.3
+  flutter_launcher_icons: ^0.14.4
+  
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  remove_alpha_ios: true
+  image_path: "apk_img/apkImg.jpeg"
 
 dev_dependencies:
   flutter_test:

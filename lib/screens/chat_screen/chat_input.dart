@@ -443,6 +443,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                       child: Text(
                         message.pdfName ?? 'PDF Document',
                         style: TextStyle(
+                          fontFamily: AppText.familyFont,
                           color: message.isSentByMe
                               ? AppColor.colorWhite
                               : AppColor.colorBlack,
@@ -456,14 +457,13 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                 ),
               )
             else
-              Text(
+              AppText.mediumText(
                 message.text,
-                style: TextStyle(
-                  color: message.isSentByMe
-                      ? AppColor.colorWhite
-                      : AppColor.colorBlack,
-                  fontSize: 16,
-                ),
+                FontWeight.w600,
+                fontSize: FontSize.font16,
+                color: message.isSentByMe
+                    ? AppColor.colorWhite
+                    : AppColor.colorBlack,
               ),
             const SizedBox(height: 4),
             Text(
@@ -506,13 +506,11 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                           color: Colors.grey[400],
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
+                        child: AppText.mediumText(
                           groupByValue,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          FontWeight.w500,
+                          fontSize: FontSize.font12,
+                          color: AppColor.colorWhite,
                         ),
                       ),
                     ),
@@ -588,8 +586,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: isLoading ? null : 
-                ifTokenHasExpire,
+                onTap: isLoading ? null : ifTokenHasExpire,
                 // _pickPdfFile,
                 child: Container(
                   width: 48,
