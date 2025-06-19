@@ -29,6 +29,7 @@ dependencies:
   grouped_list: ^6.0.0
   file_picker: ^10.2.0
   intl: ^0.20.2
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   flutter_test:

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:p_chat/global_content/app_color.dart';
 import 'package:p_chat/global_content/global_varable.dart';
+import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/screens/widgets/text_widget.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -13,6 +14,9 @@ import 'package:http_parser/http_parser.dart';
 // import 'package:path/path.dart' as p;
 import 'package:p_chat/services/all_endpoint.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+
 
 class Message {
   final String text;
@@ -47,10 +51,145 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
   List<Message> messages = [];
   bool isLoading = false;
   String? uploadedPdfId;
+  WebSocketChannel? _channel;
+  bool _isConnectedToWebSocket = false;
+  String? _accessToken;
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccessToken();
+    _messageController.addListener(() {
+      setState(() {
+        _hasText = _messageController.text.trim().isNotEmpty;
+      });
+    });
+  }
+
+  Future<void> _loadAccessToken() async {
+    setState(() async {
+      _accessToken = await Pref.getStringValue(tokenKey);
+    });
+  }
+
+  void _connectWebSocket(String pdfId) async {
+    if (_channel != null) {
+      debugPrint('Closing existing WebSocket connection...');
+      await _channel!.sink.close(1000, 'Reconnecting');
+      _channel = null;
+    }
+
+    if (_accessToken == null || _accessToken!.isEmpty) {
+      if (mounted) {
+        SnackBarView.showSnackBar(
+            context, 'Access token not available. Cannot connect to chat.');
+      }
+      return;
+    }
+
+    try {
+      String tokenForWs = _accessToken!.startsWith('Bearer ')
+          ? _accessToken!
+          : 'Bearer $_accessToken';
+
+      final wsUrl =
+          Uri.parse('$chatWebsocketBaseUrl$pdfId?access_token=$tokenForWs');
+
+      debugPrint('Attempting to connect to WebSocket: $wsUrl');
+
+      _channel = WebSocketChannel.connect(wsUrl);
+
+      if (mounted) {
+        SnackBarView.showSnackBar(context, 'Connecting to chat...');
+      }
+
+      await _channel!.ready; // Wait for the connection to be established
+
+      setState(() {
+        _isConnectedToWebSocket = true;
+        debugPrint('Is connected to websocket $_isConnectedToWebSocket');
+      });
+
+      if (mounted) {
+        SnackBarView.showSnackBar(context, 'Connected to chat!');
+        debugPrint('Connected to chat');
+      }
+
+      _channel!.stream.listen(
+        (data) {
+          debugPrint('Received WebSocket data: $data');
+          try {
+            final Map<String, dynamic> responseData = json.decode(data);
+            final String aiResponse = responseData['response'] ??
+                responseData['message'] ??
+                data.toString();
+            final aiMessage = Message(
+              text: aiResponse,
+              date: DateTime.now(),
+              pdfId: pdfId,
+              isSentByMe: false,
+            );
+
+            setState(() {
+              messages.add(aiMessage);
+              isLoading = false;
+            });
+            _scrollToBottom();
+          } catch (e) {
+            debugPrint('Error parsing WebSocket response: $e. Raw data: $data');
+            // Fallback to displaying raw data if parsing fails
+            final aiMessage = Message(
+              text: data.toString(),
+              date: DateTime.now(),
+              pdfId: pdfId,
+              isSentByMe: false,
+            );
+
+            setState(() {
+              messages.add(aiMessage);
+              isLoading = false;
+            });
+            _scrollToBottom();
+          }
+        },
+        onDone: () {
+          debugPrint('WebSocket connection closed');
+          setState(() {
+            _isConnectedToWebSocket = false;
+            isLoading = false;
+          });
+          if (mounted) {
+            SnackBarView.showSnackBar(context, 'Chat disconnected.');
+          }
+        },
+        onError: (error) {
+          debugPrint('WebSocket error: $error');
+          setState(() {
+            _isConnectedToWebSocket = false;
+            isLoading = false;
+          });
+          if (mounted) {
+            SnackBarView.showSnackBar(context, 'Chat error: $error');
+          }
+        },
+        cancelOnError: false,
+      );
+    } catch (e) {
+      debugPrint('Failed to connect WebSocket: $e');
+      setState(() {
+        _isConnectedToWebSocket = false;
+        isLoading = false;
+        debugPrint('2 is connected to websocket $_isConnectedToWebSocket');
+      });
+      if (mounted) {
+        SnackBarView.showSnackBar(context, 'Failed to connect to chat: $e');
+      }
+    }
+  }
 
   Future<void> _pickPdfFile() async {
     try {
-      // It's important to use FileType.any or check permissions if facing issues
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
@@ -83,26 +222,27 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
             isLoading = false;
           });
           _scrollToBottom();
+
+          _connectWebSocket(pdfId);
         } else {
           setState(() {
             isLoading = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to upload PDF')),
-          );
+          if (mounted) {
+            SnackBarView.showSnackBar(context, 'Failed to upload PDF');
+          }
         }
       } else {
-        // User canceled the picker
         debugPrint('File picking canceled or no file selected.');
       }
     } catch (e) {
       setState(() {
         isLoading = false;
       });
-      debugPrint('Error picking file: $e'); // Debug the specific error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
+      debugPrint('Error picking file: $e');
+      if (mounted) {
+        SnackBarView.showSnackBar(context, 'Error picking file: $e');
+      }
     }
   }
 
@@ -141,6 +281,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
         } catch (e) {
           debugPrint(
               'JSON parsing or key access failed. Attempting to treat response as plain string (doc_id). Error: $e');
+
           String potentialDocId = responseData.trim();
           if (potentialDocId.isNotEmpty) {
             debugPrint('Returning plain string as doc_id: $potentialDocId');
@@ -162,19 +303,31 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
     }
   }
 
-  // / this is to send message
   Future<void> _sendMessage(String messageText) async {
-    if (messageText.trim().isEmpty && uploadedPdfId == null) return;
+    if (messageText.trim().isEmpty) return;
+
+    if (uploadedPdfId == null || uploadedPdfId!.isEmpty) {
+      if (mounted) {
+        SnackBarView.showSnackBar(context, 'Please upload a PDF first.');
+      }
+      return;
+    }
+
+    if (!_isConnectedToWebSocket || _channel == null) {
+      debugPrint('WebSocket not connected. Attempting to reconnect...');
+      if (mounted) {
+        SnackBarView.showSnackBar(context, 'Connecting to chat...');
+      }
+      _connectWebSocket(uploadedPdfId!);
+      return;
+    }
 
     final userMessage = Message(
-      text: messageText.isNotEmpty
-          ? messageText
-          : (uploadedPdfId != null ? 'Sent PDF' : ''),
+      text: messageText,
       date: DateTime.now(),
-      pdfId: uploadedPdfId ?? '',
+      pdfId: uploadedPdfId!,
       isSentByMe: true,
-      isPdf: uploadedPdfId != null,
-      pdfName: uploadedPdfId != null ? 'Uploaded PDF' : null,
+      isPdf: false,
     );
 
     setState(() {
@@ -186,47 +339,22 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
     _scrollToBottom();
 
     try {
-      // Replace with your actual chat endpoint
-      String getPdfId = ref.watch(Message.holdPdfId);
-      String token = await Pref.getStringValue(tokenKey);
-      String yourToken = token.trim();
+      final messageData = json.encode({
+        'question': messageText,
+        'message': messageText,
+        'query': messageText,
+      });
 
-      final response = await http.post(
-        Uri.parse('$chatEndpoint$getPdfId$yourToken'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({}),
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        final aiMessage = Message(
-          text: responseData['response'],
-          date: DateTime.now(),
-          pdfId: uploadedPdfId ?? '',
-          isSentByMe: false,
-        );
-
-        setState(() {
-          messages.add(aiMessage);
-          isLoading = false;
-          uploadedPdfId = null; // Clear uploaded PDF ID after sending
-        });
-        _scrollToBottom();
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to send message')),
-        );
-      }
+      debugPrint('Sending message: $messageData');
+      _channel!.sink.add(messageData);
     } catch (e) {
+      debugPrint('Error sending message: $e');
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        SnackBarView.showSnackBar(context, 'Error sending message: $e');
+      }
     }
   }
 
@@ -243,7 +371,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
   }
 
   String _formatDate(DateTime date) {
-    return DateFormat('MMM dd, yyyy').format(date);
+    return DateFormat('MMM dd,EEEE').format(date);
   }
 
   Widget _buildMessageBubble(Message message) {
@@ -281,11 +409,10 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
             if (message.isPdf)
               GestureDetector(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(
-                            'Opening PDF: ${message.pdfName ?? 'Document'} with ID: ${message.pdfId}')),
-                  );
+                  if (mounted) {
+                    SnackBarView.showSnackBar(context,
+                        'Opening PDF: ${message.pdfName ?? 'Document'} with ID: ${message.pdfId}');
+                  }
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -374,8 +501,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                   itemBuilder: (context, Message message) =>
                       _buildMessageBubble(message),
                   order: GroupedListOrder.ASC,
-                  useStickyGroupSeparators:
-                      false, // Set to false so the date moves with scroll
+                  useStickyGroupSeparators: false,
                   floatingHeader: false,
                   controller: _scrollController,
                 ),
@@ -414,7 +540,9 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                 child: TextField(
                   controller: _messageController,
                   decoration: InputDecoration(
-                    hintText: 'Type your message here...',
+                    hintText: uploadedPdfId != null
+                        ? 'Type your message here...'
+                        : 'Upload PDF to chat',
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
@@ -426,10 +554,9 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                         horizontal: 20, vertical: 12),
                   ),
                   onSubmitted: uploadedPdfId != null
-                      ? null
-                      : (value) => _sendMessage(
-                          value), // Only allow sending text if no PDF is attached
-                  enabled: !isLoading,
+                      ? (value) => _sendMessage(value)
+                      : null,
+                  enabled: !isLoading && uploadedPdfId != null,
                 ),
               ),
               const SizedBox(width: 8),
@@ -451,18 +578,14 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: isLoading ||
-                        (_messageController.text.isEmpty &&
-                            uploadedPdfId == null)
+                onTap: isLoading || !_hasText || uploadedPdfId == null
                     ? null
                     : () => _sendMessage(_messageController.text),
                 child: Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isLoading ||
-                            (_messageController.text.isEmpty &&
-                                uploadedPdfId == null)
+                    color: isLoading || !_hasText || uploadedPdfId == null
                         ? Colors.grey
                         : Colors.blue,
                     shape: BoxShape.circle,
@@ -485,6 +608,9 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    if (_channel != null) {
+      _channel!.sink.close();
+    }
     super.dispose();
   }
 }
