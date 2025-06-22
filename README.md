@@ -1,26 +1,66 @@
-# UI Challenge
+# P_CHAT
 
-This project is a UI challenge, designed purely for the purpose of practicing and showcasing UI/UX skills. Please note that it does not include any backend functionality.
+## About
+P-Chat is your intelligent, AI-powered PDF assistant designed to simplify complex documents. Upload your PDFs and engage in a natural conversation with the AI to get clear, concise explanations and insights. Say goodbye to information overload and hello to effortless understanding!
 
-## App Screenshot
+## Features
+* **AI-Powered Chat:** Interact with your PDFs using natural language.
+* **Simplified Explanations:** Get complex information broken down into easy-to-understand summaries.
+* **Intuitive Interface:** A user-friendly design for seamless navigation.
 
-![App Screenshot](challenge_image/readmeImage/Splash.jpg)
-*Splash Screen*
+## App Screenshots
 
-![Screenshot 1](challenge_image/readmeImage/onboarding.jpg)
-*Onboarding*
+| Screen              | Screenshot                                     | Description          |
+| :------------------ | :--------------------------------------------- | :------------------- |
+| **Splash Screen** | ![App Screenshot](p-chat_image/Splash.jpg) | The initial loading screen when the app starts. |
+| **Login Screen** | ![Screenshot 1](challenge_image/onboarding.jpg) | Allow user to login |
+| **SignUp Screen** | ![Screenshot 2](p-chat_image/lesson.jpg) | Allow user to signUp|
+| **Chat Page** | ![Screenshot 2](p-chat_image/exercise.jpg) | The core AI chat interface for PDF interaction.|
+| **AI response** | ![Screenshot 2](p-chat_image/game.jpg)   | Response from AI |
 
-![Screenshot 2](challenge_image/readmeImage/home.jpg)
-*Home page*
+## How to Clone and Run Locally
 
-![Screenshot 2](challenge_image/readmeImage/lesson.jpg)
-*Lesson Page*
+Follow these simple steps to get P-Chat up and running on your local machine.
 
-![Screenshot 2](challenge_image/readmeImage/exercise.jpg)
-*Exercise Page*
+### Prerequisites
 
-![Screenshot 2](challenge_image/readmeImage/game.jpg)
-*Game Page*
+Before you begin, ensure you have the following installed:
 
-![Screenshot 2](challenge_image/readmeImage/chat.jpg)
-*Chat Page*
+* **Git:** For cloning the repository.
+    * [Download Git](https://git-scm.com/downloads)
+* **Flutter SDK:** For running the Flutter application.
+    * [Install Flutter](https://flutter.dev/docs/get-started/install)
+
+### Step-by-Step Guide
+
+1.  **Clone the Repository:**
+    Open your terminal or command prompt and run the following command to clone the P-Chat repository:
+
+    ```bash
+    git clone [https://github.com/YOUR_USERNAME/P_CHAT.git](https://github.com/YOUR_USERNAME/P_CHAT.git)
+ 
+
+2.  **Navigate to the Project Directory:**
+    Change your current directory to the cloned project folder:
+
+    ```bash
+    cd P_CHAT
+    ```
+
+3.  **Install Dependencies:**
+    Fetch all the necessary Flutter packages required for the project:
+
+    ```bash
+    flutter pub get
+    ```
+
+4.  **Run the Application:**
+    Connect a device (physical or emulator) or run it on a web browser or desktop, then execute the following command:
+
+    ```bash
+    flutter run
+    ```
+
+    This command will build and launch the P-Chat application.
+
+That's it! You should now have P-Chat running on your local machine.
