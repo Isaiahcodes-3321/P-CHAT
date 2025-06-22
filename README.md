@@ -1,16 +1,26 @@
-# p_chat
+# UI Challenge
 
-A new Flutter project.
+This project is a UI challenge, designed purely for the purpose of practicing and showcasing UI/UX skills. Please note that it does not include any backend functionality.
 
-## Getting Started
+## App Screenshot
 
-This project is a starting point for a Flutter application.
+![App Screenshot](challenge_image/readmeImage/Splash.jpg)
+*Splash Screen*
 
-A few resources to get you started if this is your first Flutter project:
+![Screenshot 1](challenge_image/readmeImage/onboarding.jpg)
+*Onboarding*
 
- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+![Screenshot 2](challenge_image/readmeImage/home.jpg)
+*Home page*
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+![Screenshot 2](challenge_image/readmeImage/lesson.jpg)
+*Lesson Page*
+
+![Screenshot 2](challenge_image/readmeImage/exercise.jpg)
+*Exercise Page*
+
+![Screenshot 2](challenge_image/readmeImage/game.jpg)
+*Game Page*
+
+![Screenshot 2](challenge_image/readmeImage/chat.jpg)
+*Chat Page*
