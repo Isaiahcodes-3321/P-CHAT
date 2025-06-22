@@ -37,7 +37,7 @@ Before you begin, ensure you have the following installed:
     Open your terminal or command prompt and run the following command to clone the P-Chat repository:
 
     ```bash
-    git clone [https://github.com/YOUR_USERNAME/P_CHAT.git](https://github.com/YOUR_USERNAME/P_CHAT.git)
+    git clone [https://github.com/Isaiahcodes-3321/P-CHAT.git](https://github.com/Isaiahcodes-3321/P-CHAT.git)
  
 
 2.  **Navigate to the Project Directory:**
