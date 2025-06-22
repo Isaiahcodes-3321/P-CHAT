@@ -12,11 +12,11 @@ P-Chat is your intelligent, AI-powered PDF assistant designed to simplify comple
 
 | Screen              | Screenshot                                     | Description          |
 | :------------------ | :--------------------------------------------- | :------------------- |
-| **Splash Screen** | ![App Screenshot](p-chat_image/Splash.jpg) | The initial loading screen when the app starts. |
-| **Login Screen** | ![Screenshot 1](challenge_image/onboarding.jpg) | Allow user to login |
-| **SignUp Screen** | ![Screenshot 2](p-chat_image/lesson.jpg) | Allow user to signUp|
-| **Chat Page** | ![Screenshot 2](p-chat_image/exercise.jpg) | The core AI chat interface for PDF interaction.|
-| **AI response** | ![Screenshot 2](p-chat_image/game.jpg)   | Response from AI |
+| **Splash Screen** | ![App Screenshot](p-chat_image/Splaceview.jpg) | The initial loading screen when the app starts. |
+| **Login Screen** | ![Screenshot 1](chap-chat_image/LoginView.jpg) | Allow user to login |
+| **SignUp Screen** | ![Screenshot 2](p-chat_image/RegisterView.jpg) | Allow user to signUp|
+| **Chat Page** | ![Screenshot 2](p-chat_image/Chatview.jpg) | The core AI chat interface for PDF interaction.|
+| **AI response** | ![Screenshot 2](p-chat_image/Airesposne.jpg)   | Response from AI |
 
 ## How to Clone and Run Locally
 
