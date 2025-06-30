@@ -1,6 +1,6 @@
 import 'package:http/http.dart' as http;
 
-import 'export.dart';
+import '../export.dart';
 import 'dart:async';
 
 class LoginApi {

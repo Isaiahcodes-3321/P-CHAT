@@ -5,7 +5,7 @@ import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/models/login_model.dart';
 import 'package:p_chat/screens/auth_screen/forgot_password/forgot_password_email.dart';
 import 'package:p_chat/screens/auth_screen/register/registration.dart';
-import 'package:p_chat/services/login_service.dart';
+import 'package:p_chat/services/auth_services/login_service.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
 import 'export.dart';
 

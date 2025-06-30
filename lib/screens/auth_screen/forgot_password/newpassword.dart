@@ -2,7 +2,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/models/reset_password_model.dart';
 import 'package:p_chat/screens/auth_screen/export.dart';
-import 'package:p_chat/services/reset_password_service.dart';
+import 'package:p_chat/services/auth_services/reset_password_service.dart';
 
 class NewPasswordView extends ConsumerStatefulWidget {
   const NewPasswordView({Key? key}) : super(key: key);

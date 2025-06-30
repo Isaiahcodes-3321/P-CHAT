@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:p_chat/models/registration_model.dart';
 import 'package:p_chat/screens/auth_screen/register/register_otp.dart';
-import 'export.dart';
+import '../export.dart';
 
 class RegistrationApi {
   static Future<void> userRegistration(
