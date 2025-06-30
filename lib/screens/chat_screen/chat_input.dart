@@ -9,6 +9,7 @@ import 'package:p_chat/global_content/app_color.dart';
 import 'package:p_chat/global_content/global_varable.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/screens/chat_screen/chat_view.dart';
+import 'package:p_chat/screens/chat_screen/providers.dart';
 import 'package:p_chat/screens/widgets/text_widget.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -49,12 +50,12 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<Message> messages = [];
-  bool isLoading = false;
+  // bool isLoading = false;
   String? uploadedPdfId;
   WebSocketChannel? _channel;
-  bool _isConnectedToWebSocket = false;
+  // bool _isConnectedToWebSocket = false;
   String? _accessToken;
-  bool _hasText = false;
+  // bool _hasText = false;
 
   @override
   void initState() {
@@ -62,7 +63,8 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
     _loadAccessToken();
     _messageController.addListener(() {
       setState(() {
-        _hasText = _messageController.text.trim().isNotEmpty;
+        ref.read(ChatProviders.hasText.notifier).state =
+            _messageController.text.trim().isNotEmpty;
       });
     });
   }
@@ -106,10 +108,9 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
 
       await _channel!.ready; // Wait for the connection to be established
 
-      setState(() {
-        _isConnectedToWebSocket = true;
-        debugPrint('Is connected to websocket $_isConnectedToWebSocket');
-      });
+      ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = true;
+      debugPrint(
+          'Is connected to websocket ${ref.watch(ChatProviders.isConnectedToWebSocket)}');
 
       if (mounted) {
         SnackBarView.showSnackBar(context, 'Connected to chat!');
@@ -133,7 +134,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
 
             setState(() {
               messages.add(aiMessage);
-              isLoading = false;
+              ref.read(ChatProviders.isLoading.notifier).state = false;
             });
             _scrollToBottom();
           } catch (e) {
@@ -148,7 +149,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
 
             setState(() {
               messages.add(aiMessage);
-              isLoading = false;
+              ref.read(ChatProviders.isLoading.notifier).state = false;
             });
             _scrollToBottom();
           }
@@ -156,8 +157,9 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
         onDone: () {
           debugPrint('WebSocket connection closed');
           setState(() {
-            _isConnectedToWebSocket = false;
-            isLoading = false;
+            ref.read(ChatProviders.isConnectedToWebSocket.notifier).state =
+                false;
+            ref.read(ChatProviders.isLoading.notifier).state = false;
           });
           if (mounted) {
             SnackBarView.showSnackBar(context, 'Chat disconnected.');
@@ -165,10 +167,10 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
         },
         onError: (error) {
           debugPrint('WebSocket error: $error');
-          setState(() {
-            _isConnectedToWebSocket = false;
-            isLoading = false;
-          });
+
+          ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = false;
+          ref.read(ChatProviders.isLoading.notifier).state = false;
+
           if (mounted) {
             SnackBarView.showSnackBar(context, 'Chat error: $error');
           }
@@ -178,9 +180,10 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
     } catch (e) {
       debugPrint('Failed to connect WebSocket: $e');
       setState(() {
-        _isConnectedToWebSocket = false;
-        isLoading = false;
-        debugPrint('2 is connected to websocket $_isConnectedToWebSocket');
+        ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = false;
+        ref.read(ChatProviders.isLoading.notifier).state = false;
+        debugPrint(
+            '2 is connected to websocket ${ref.watch(ChatProviders.isConnectedToWebSocket)}');
       });
       if (mounted) {
         SnackBarView.showSnackBar(context, 'Failed to connect to chat: $e');
@@ -211,7 +214,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
 
       if (result != null && result.files.single.path != null) {
         setState(() {
-          isLoading = true;
+          ref.read(ChatProviders.isLoading.notifier).state = true;
         });
 
         final file = File(result.files.single.path!);
@@ -232,14 +235,14 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
 
           setState(() {
             messages.add(pdfMessage);
-            isLoading = false;
+            ref.read(ChatProviders.isLoading.notifier).state = false;
           });
           _scrollToBottom();
 
           _connectWebSocket(pdfId);
         } else {
           setState(() {
-            isLoading = false;
+            ref.read(ChatProviders.isLoading.notifier).state = false;
           });
           if (mounted) {
             SnackBarView.showSnackBar(context, 'Failed to upload PDF');
@@ -250,7 +253,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
       }
     } catch (e) {
       setState(() {
-        isLoading = false;
+        ref.read(ChatProviders.isLoading.notifier).state = false;
       });
       debugPrint('Error picking file: $e');
       if (mounted) {
@@ -326,7 +329,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
       return;
     }
 
-    if (!_isConnectedToWebSocket || _channel == null) {
+    if (!ref.watch(ChatProviders.isConnectedToWebSocket) || _channel == null) {
       debugPrint('WebSocket not connected. Attempting to reconnect...');
       if (mounted) {
         SnackBarView.showSnackBar(context, 'Connecting to chat...');
@@ -345,7 +348,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
 
     setState(() {
       messages.add(userMessage);
-      isLoading = true;
+      ref.read(ChatProviders.isLoading.notifier).state = true;
     });
 
     _messageController.clear();
@@ -363,7 +366,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
     } catch (e) {
       debugPrint('Error sending message: $e');
       setState(() {
-        isLoading = false;
+        ref.read(ChatProviders.isLoading.notifier).state = false;
       });
       if (mounted) {
         SnackBarView.showSnackBar(context, 'Error sending message: $e');
@@ -523,7 +526,7 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                   controller: _scrollController,
                 ),
         ),
-        if (isLoading)
+        if (ref.watch(ChatProviders.isLoading))
           Container(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -581,18 +584,23 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
                   onSubmitted: uploadedPdfId != null
                       ? (value) => _sendMessage(value)
                       : null,
-                  enabled: !isLoading && uploadedPdfId != null,
+                  enabled: !ref.watch(ChatProviders.isLoading) &&
+                      uploadedPdfId != null,
                 ),
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: isLoading ? null : ifTokenHasExpire,
+                onTap: ref.watch(ChatProviders.isLoading)
+                    ? null
+                    : ifTokenHasExpire,
                 // _pickPdfFile,
                 child: Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isLoading ? Colors.grey : AppColor.colorBlue,
+                    color: ref.watch(ChatProviders.isLoading)
+                        ? Colors.grey
+                        : AppColor.colorBlue,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -604,14 +612,18 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: isLoading || !_hasText || uploadedPdfId == null
+                onTap: ref.watch(ChatProviders.isLoading) ||
+                        !ref.watch(ChatProviders.hasText) ||
+                        uploadedPdfId == null
                     ? null
                     : () => _sendMessage(_messageController.text),
                 child: Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isLoading || !_hasText || uploadedPdfId == null
+                    color: ref.watch(ChatProviders.isLoading) ||
+                            !ref.watch(ChatProviders.hasText) ||
+                            uploadedPdfId == null
                         ? const Color.fromARGB(216, 160, 166, 185)
                         : AppColor.colorBlue,
                     shape: BoxShape.circle,
