@@ -15,7 +15,6 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 
 
-
 class WebSocketConnectionServices {
   static Future<void> connectWebSocket(
       String pdfId, WidgetRef ref, BuildContext context,
@@ -47,7 +46,7 @@ class WebSocketConnectionServices {
       debugPrint('Pdf ID : $pdfId');
 
       ChatProviders.channel = WebSocketChannel.connect(wsUrl);
-      SnackBarView.showSnackBar(context, 'Connecting to chat...');
+      // SnackBarView.showSnackBar(context, 'Connecting to chat...');
       await ChatProviders.channel!.ready;
 
       ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = true;
@@ -70,27 +69,12 @@ class WebSocketConnectionServices {
                       item['message'] ??
                       item['response'] ??
                       '';
-                  String promptQuestion = '';
-                  // Direct access to 'prompt' as a string
+
+                  String promptFromBackend = '';
                   if (item['prompt'] != null && item['prompt'] is String) {
-                    promptQuestion = item['prompt'];
+                    promptFromBackend = item['prompt'];
                   }
 
-                  if (promptQuestion.isNotEmpty) {
-                    final userMessage = Message(
-                      text: promptQuestion,
-                      date: DateTime.now(),
-                      pdfId: pdfId,
-                      isSentByMe: true,
-                    );
-                    addMessageToUi(userMessage);
-                    // Update the history list with this prompt
-                    ref
-                        .read(pdfHistoryListProvider.notifier)
-                        .updateHistoryItem(pdfId, promptQuestion);
-                  }
-
-                  // Add AI's response
                   if (aiResponse.isNotEmpty) {
                     final aiMessage = Message(
                       text: aiResponse,
@@ -99,6 +83,11 @@ class WebSocketConnectionServices {
                       isSentByMe: false,
                     );
                     addMessageToUi(aiMessage);
+                    if (promptFromBackend.isNotEmpty) {
+                      ref
+                          .read(pdfHistoryListProvider.notifier)
+                          .updateHistoryItem(pdfId, promptFromBackend);
+                    }
                   }
                 }
               }
@@ -216,6 +205,7 @@ class WebSocketConnectionServices {
           try {
             final List<dynamic> responseList = json.decode(data);
             if (responseList.isNotEmpty) {
+              // Sort messages by created_at to ensure correct order
               responseList.sort((a, b) {
                 final DateTime dateA = DateTime.parse(a['created_at']);
                 final DateTime dateB = DateTime.parse(b['created_at']);
@@ -229,7 +219,7 @@ class WebSocketConnectionServices {
                       item['response'] ??
                       '';
                   String promptQuestion = '';
-                  DateTime messageDate = DateTime.now();
+                  DateTime messageDate = DateTime.now(); 
                   if (item['created_at'] != null) {
                     messageDate = DateTime.parse(item['created_at']);
                   }
@@ -239,6 +229,7 @@ class WebSocketConnectionServices {
                     promptQuestion = item['prompt'];
                   }
 
+                  // Add user message if there's a prompt
                   if (promptQuestion.isNotEmpty) {
                     final userMessage = Message(
                       text: promptQuestion,
@@ -248,6 +239,7 @@ class WebSocketConnectionServices {
                     );
                     ref.read(messagesProvider.notifier).addMessage(userMessage);
                     // Update the history list with the most recent prompt for this PDF
+                    // This is for ensuring history sidebar is up-to-date
                     ref
                         .read(pdfHistoryListProvider.notifier)
                         .updateHistoryItem(pdfId, promptQuestion);

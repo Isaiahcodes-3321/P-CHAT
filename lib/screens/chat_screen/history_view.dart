@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:p_chat/global_content/app_color.dart';
 import 'package:p_chat/global_content/global_varable.dart';
+import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/screens/chat_screen/chat_view.dart';
 import 'package:p_chat/screens/chat_screen/providers.dart';
 import 'package:p_chat/screens/widgets/text_widget.dart';
+import 'package:p_chat/services/chat_services/delete_chats.dart';
 import 'package:p_chat/services/chat_services/web_socketconnection.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-
-
 
 final pdfHistoryListProvider =
     StateNotifierProvider<PdfHistoryListNotifier, List<Map<String, String>>>(
@@ -24,7 +24,6 @@ class PdfHistoryListNotifier extends StateNotifier<List<Map<String, String>>> {
     final List<Map<String, String>> historyItems = [];
 
     for (String pdfId in pdfIds) {
-      // Retrieve the saved question for this PDF ID
       final savedQuestion = await Pref.getStringValue('lastQuestion_$pdfId');
       historyItems.add({
         'pdfId': pdfId,
@@ -36,31 +35,57 @@ class PdfHistoryListNotifier extends StateNotifier<List<Map<String, String>>> {
     state = historyItems;
   }
 
-  // Method to update a history item's last question
   Future<void> updateHistoryItem(String pdfId, String lastQuestion) async {
     final List<Map<String, String>> currentHistory = List.from(state);
     int index = currentHistory.indexWhere((item) => item['pdfId'] == pdfId);
 
+    await Pref.setStringValue('lastQuestion_$pdfId', lastQuestion);
+
     if (index != -1) {
-      currentHistory[index]['question'] = lastQuestion;
-      state = currentHistory;
-      await Pref.setStringValue('lastQuestion_$pdfId', lastQuestion);
+      final Map<String, String> updatedItem = {
+        'pdfId': pdfId,
+        'question': lastQuestion
+      };
+      currentHistory.removeAt(index);
+      currentHistory.insert(0, updatedItem);
     } else {
-      // If the item doesn't exist, add it
-      currentHistory.add({'pdfId': pdfId, 'question': lastQuestion});
-      state = currentHistory;
-      await Pref.setStringValue('lastQuestion_$pdfId', lastQuestion);
-      // Also add the PDF ID to the main list if it's new
+      currentHistory.insert(0, {
+        'pdfId': pdfId,
+        'question': lastQuestion,
+      });
+
       List<String> pdfIds = await Pref.getStringListValue(pdfIdListKey);
       if (!pdfIds.contains(pdfId)) {
-        pdfIds.add(pdfId);
+        pdfIds.insert(0, pdfId);
         await Pref.setStringListValue(pdfIdListKey, pdfIds);
       }
+    }
+    state = currentHistory;
+  }
+
+  Future<void> deleteHistoryItem(String pdfId) async {
+    // Remove from the current state list
+    final List<Map<String, String>> currentHistory = List.from(state);
+    final int initialLength = currentHistory.length;
+    currentHistory.removeWhere((item) => item['pdfId'] == pdfId);
+
+    if (currentHistory.length < initialLength) {
+      state = currentHistory;
+
+      List<String> pdfIds = await Pref.getStringListValue(pdfIdListKey);
+      pdfIds.remove(pdfId);
+      await Pref.setStringListValue(pdfIdListKey, pdfIds);
+
+      // Also remove the specific question for this PDF ID from SharedPreferences
+      await Pref.removeDateFromStorage('lastQuestion_$pdfId');
+      debugPrint(
+          'Deleted PDF history item with ID: $pdfId from storage and state.');
+    } else {
+      debugPrint('PDF history item with ID: $pdfId not found in history.');
     }
   }
 }
 
-// This is the actual sidebar widget that will be shown
 class HistorySidebarView extends ConsumerStatefulWidget {
   const HistorySidebarView({Key? key}) : super(key: key);
 
@@ -72,7 +97,6 @@ class _HistorySidebarViewState extends ConsumerState<HistorySidebarView> {
   @override
   void initState() {
     super.initState();
-    // Load history when the sidebar is initialized
     _loadHistory();
   }
 
@@ -93,7 +117,11 @@ class _HistorySidebarViewState extends ConsumerState<HistorySidebarView> {
             Align(
               alignment: Alignment.topRight,
               child: IconButton(
-                icon: const Icon(Icons.close, color: AppColor.colorWhite),
+                icon: const Icon(
+                  Icons.cancel_outlined,
+                  color: AppColor.colorWhite,
+                  size: 29,
+                ),
                 onPressed: () {
                   ref
                       .read(ProviderUserDetails.showHistorySidebar.notifier)
@@ -195,8 +223,58 @@ class _HistorySidebarViewState extends ConsumerState<HistorySidebarView> {
                                     fontSize: FontSize.font12,
                                     color: AppColor.colorWhite.withOpacity(0.7),
                                   ),
-                                  trailing: const Icon(Icons.arrow_forward_ios,
-                                      color: AppColor.colorWhite, size: 16),
+                                  trailing: PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert,
+                                        color: AppColor.colorWhite),
+                                    onSelected: (value) {},
+                                    itemBuilder: (BuildContext context) =>
+                                        <PopupMenuEntry<String>>[
+                                      PopupMenuItem<String>(
+                                        onTap: () {
+                                          Future.microtask(() {
+                                            debugPrint(
+                                                'User PDFID $pdfId \n index number $index');
+                                            ref
+                                                .read(ProviderUserDetails
+                                                    .showHistorySidebar
+                                                    .notifier)
+                                                .state = false;
+                                            ref
+                                                .read(pdfHistoryListProvider
+                                                    .notifier)
+                                                .deleteHistoryItem(pdfId);
+
+                                            SnackBarView.showSnackBar(context,
+                                                'Deleting Pdf history...',
+                                                sec: 2);
+
+                                            DeleteChatsServices.deleteChat(
+                                                ref, context, pdfId);
+
+                                            //  clear the chat messages or reset the active PDF.
+                                            // Example:
+                                            // if (ref.read(ChatProviders.uploadedPdfId) == pdfId) {
+                                            //   ref.read(ChatProviders.messages.notifier).state = []; // Clear chat messages
+                                            //   ref.read(ChatProviders.uploadedPdfId.notifier).state = ''; // Clear active PDF ID
+                                            // }
+                                          });
+                                        },
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.delete_outlined,
+                                                color: Colors.red),
+                                            const SizedBox(width: 8),
+                                            AppText.mediumText(
+                                              'Delete',
+                                              FontWeight.normal,
+                                              fontSize: FontSize.font18,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                   onTap: () async {
                                     debugPrint('Tapped on PDF ID: $pdfId');
                                     ref

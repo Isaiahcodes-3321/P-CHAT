@@ -4,10 +4,11 @@ import '../export.dart';
 import 'dart:async';
 
 class DeleteChatsServices {
-  static Future<void> deleteChat(WidgetRef ref, BuildContext context) async {
-    String docId = 'unn97h22njd2r3fwf-22d';
+  static Future<void> deleteChat(
+      WidgetRef ref, BuildContext context, String docId) async {
     String token = await Pref.getStringValue(tokenKey);
     String yourToken = token.trim();
+    debugPrint('Deleting pdf now');
     final response = await http.delete(
       Uri.parse(deleteEndpoint + docId),
       headers: {
@@ -32,6 +33,13 @@ class DeleteChatsServices {
     debugPrint('Response on resend email otp $prettyprint');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
+      ref.read(ProviderUserDetails.showHistorySidebar.notifier).state = false;
+      Navigator.pushReplacement<void, void>(
+        context,
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const ChatView(),
+        ),
+      );
       EndpointUpdateUI.updateUi(message, ref, context);
     } else {
       EndpointUpdateUI.updateUi(message, ref, context);
