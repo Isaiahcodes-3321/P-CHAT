@@ -21,8 +21,6 @@ import 'package:p_chat/services/all_endpoint.dart';
 import 'package:p_chat/services/chat_services/web_socketconnection.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
 
-
-
 class Message {
   final String text;
   final DateTime date;
@@ -111,6 +109,14 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
           ref.read(messagesProvider.notifier).addMessage(pdfMessage);
           _scrollToBottom();
 
+          // Save the new PDF ID to the list in shared preferences
+          List<String> pdfHistory = await Pref.getStringListValue(pdfIdListKey);
+          if (!pdfHistory.contains(pdfId)) {
+            pdfHistory.add(pdfId);
+            await Pref.setStringListValue(pdfIdListKey, pdfHistory);
+            debugPrint('Added PDF ID to history: $pdfId');
+          }
+
           // Pass the necessary callbacks to the service
           await WebSocketConnectionServices.connectWebSocket(
             pdfId,
@@ -165,7 +171,14 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
 
           String docId = jsonResponse['data']['doc_id'].toString();
           debugPrint('Extracted doc_id from JSON: $docId');
-          ref.read(Message.holdPdfId.notifier).state = docId;
+
+          // Save the new PDF ID to the list in shared preferences
+          List<String> pdfHistory = await Pref.getStringListValue(pdfIdListKey);
+          if (!pdfHistory.contains(docId)) {
+            pdfHistory.add(docId);
+            await Pref.setStringListValue(pdfIdListKey, pdfHistory);
+            debugPrint('Added PDF ID to history: $docId');
+          }
           return docId;
         } catch (e) {
           debugPrint(
@@ -174,7 +187,6 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
           String potentialDocId = responseData.trim();
           if (potentialDocId.isNotEmpty) {
             debugPrint('Returning plain string as doc_id: $potentialDocId');
-            ref.read(Message.holdPdfId.notifier).state = potentialDocId;
             return potentialDocId;
           } else {
             debugPrint('Response was empty or not a valid doc_id string.');
@@ -196,13 +208,15 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
     if (messageText.trim().isEmpty) return;
 
     final uploadedPdfId = ref.watch(ChatProviders.uploadedPdfId);
+    debugPrint('sending chat pdf Id $uploadedPdfId');
 
     if (uploadedPdfId.isEmpty) {
       SnackBarView.showSnackBar(context, 'Please upload a PDF first.');
       return;
     }
 
-    if (!ref.watch(ChatProviders.isConnectedToWebSocket) || ChatProviders.channel == null) {
+    if (!ref.watch(ChatProviders.isConnectedToWebSocket) ||
+        ChatProviders.channel == null) {
       debugPrint('WebSocket not connected. Attempting to reconnect...');
       SnackBarView.showSnackBar(context, 'Connecting to chat...');
       // Reconnect via the service
@@ -215,7 +229,12 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
           ref.read(messagesProvider.notifier).addMessage(message);
         },
       );
-      return;
+      // After attempting to connect, check if connection is still not established
+      if (!ref.read(ChatProviders.isConnectedToWebSocket)) {
+        SnackBarView.showSnackBar(
+            context, 'Failed to connect to chat. Try again.');
+        return;
+      }
     }
 
     final userMessage = Message(
@@ -232,8 +251,8 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
     _messageController.clear();
     _scrollToBottom();
 
-    // Send message via the service
-    WebSocketConnectionServices.sendMessage(messageText, uploadedPdfId, ref, context);
+    WebSocketConnectionServices.sendMessage(
+        messageText, uploadedPdfId, ref, context);
   }
 
   void _scrollToBottom() {

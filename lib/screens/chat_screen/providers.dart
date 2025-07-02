@@ -24,5 +24,5 @@ class ChatProviders {
   static final isConnectedToWebSocket = StateProvider((ref) => false);
   static final hasText = StateProvider((ref) => false);
   static final uploadedPdfId = StateProvider((ref) => '');
-  static WebSocketChannel? channel; // Make WebSocketChannel static here
+  static WebSocketChannel? channel; 
 }

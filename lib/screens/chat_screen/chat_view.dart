@@ -5,8 +5,12 @@ import 'package:p_chat/global_content/global_varable.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/screens/auth_screen/login_view.dart';
 import 'package:p_chat/screens/chat_screen/chat_input.dart';
+import 'package:p_chat/screens/chat_screen/history_view.dart';
+import 'package:p_chat/screens/chat_screen/providers.dart';
 import 'package:p_chat/screens/widgets/text_widget.dart';
+import 'package:p_chat/services/chat_services/web_socketconnection.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
 class ChatView extends ConsumerStatefulWidget {
   const ChatView({super.key});
@@ -29,9 +33,23 @@ class _ChatViewState extends ConsumerState<ChatView> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getUserInfo();
+    _checkPdfHistoryAndConnect();
+  }
+
+  Future<void> _checkPdfHistoryAndConnect() async {
+    final pdfHistoryIds = await Pref.getStringListValue(pdfIdListKey);
+    debugPrint("pdf lents its ${pdfHistoryIds.length}");
+    if (pdfHistoryIds.isNotEmpty) {
+      final lastPdfId = pdfHistoryIds.last;
+      debugPrint('Found last Pdf ID in history: $lastPdfId');
+      ref.read(ChatProviders.uploadedPdfId.notifier).state = lastPdfId;
+      await WebSocketConnectionServices.initConnectWebSocket(
+          ref, context, lastPdfId);
+
+      await ref.read(pdfHistoryListProvider.notifier).loadHistory();
+    }
   }
 
   getUserInfo() async {
@@ -41,12 +59,10 @@ class _ChatViewState extends ConsumerState<ChatView> {
     ref.read(ProviderUserDetails.holdUserName.notifier).state = getUserName;
   }
 
-  bool _showHistorySidebar = false;
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final sidebarWidth = screenWidth * 0.7; 
+    final sidebarWidth = screenWidth * 0.7;
 
     return Scaffold(
         backgroundColor: AppColor.colorBlueBlack,
@@ -75,9 +91,11 @@ class _ChatViewState extends ConsumerState<ChatView> {
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                 PopupMenuItem<String>(
                   onTap: () {
-                    setState(() {
-                      _showHistorySidebar = true;
-                    });
+                    // Trigger loading history when sidebar is opened
+                    ref.read(pdfHistoryListProvider.notifier).loadHistory();
+                    ref
+                        .read(ProviderUserDetails.showHistorySidebar.notifier)
+                        .state = true;
                   },
                   value: 'history',
                   child: const Row(
@@ -109,61 +127,40 @@ class _ChatViewState extends ConsumerState<ChatView> {
           children: [
             const SafeArea(child: ChatPreview()),
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              right: _showHistorySidebar ? 0 : -sidebarWidth,
-              top: 0,
-              bottom: 0,
-              width: sidebarWidth,
-              child: Material(
-                elevation: 8.0,
-                child: Container(
-                  color: AppColor.colorWhite,
-                  child: Column(
-                    children: [
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: IconButton(
-                          icon: const Icon(Icons.close,
-                              color: AppColor.colorBlueBlack),
-                          onPressed: () {
-                            setState(() {
-                              _showHistorySidebar = false;
-                            });
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: AppText.boldText(
-                            "History Content",
-                            FontWeight.bold,
-                            fontSize: FontSize.font20,
-                            color: AppColor.colorBlueBlack,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                right: ref.watch(ProviderUserDetails.showHistorySidebar)
+                    ? 0
+                    : -sidebarWidth,
+                top: 0,
+                bottom: 0,
+                width: sidebarWidth,
+                child: const HistorySidebarView()),
           ],
-        )
-        // const SafeArea(child: ChatPreview()),
-        );
+        ));
   }
 }
 
 class ProviderUserDetails {
   static final holdUserName = StateProvider((ref) => '');
   static final holdUserId = StateProvider((ref) => '');
+  static final showHistorySidebar = StateProvider((ref) => false);
 }
 
 class LogOutUser {
-  static logUserOut(WidgetRef ref, BuildContext context) {
-    Pref.setStringValue(tokenKey, '');
-    Pref.setStringValue(userNameKey, '');
+  static logUserOut(WidgetRef ref, BuildContext context) async {
+    await Pref.setStringValue(tokenKey, '');
+    await Pref.setStringValue(userNameKey, '');
+    // Clear PDF history on logout
+    // await Pref.setStringListValue(pdfIdListKey, []);
+    // Also clear all individual last question entries
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final allKeys = prefs.getKeys();
+    // for (String key in allKeys) {
+    //   if (key.startsWith('lastQuestion_')) {
+    //     await prefs.remove(key);
+    //   }
+    // }
     Navigator.pushReplacement<void, void>(
       context,
       MaterialPageRoute<void>(
