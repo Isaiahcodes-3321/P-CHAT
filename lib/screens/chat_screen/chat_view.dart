@@ -10,6 +10,7 @@ import 'package:p_chat/screens/chat_screen/providers.dart';
 import 'package:p_chat/screens/widgets/text_widget.dart';
 import 'package:p_chat/services/chat_services/web_socketconnection.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 
 class ChatView extends ConsumerStatefulWidget {
@@ -35,6 +36,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
   void initState() {
     super.initState();
     getUserInfo();
+    _loadInitialFabPosition();
     _checkPdfHistoryAndConnect();
   }
 
@@ -57,6 +59,35 @@ class _ChatViewState extends ConsumerState<ChatView> {
     String getUserName = await Pref.getStringValue(userNameKey);
     ref.read(ProviderUserDetails.holdUserId.notifier).state = getUserId;
     ref.read(ProviderUserDetails.holdUserName.notifier).state = getUserName;
+  }
+
+  // Offset _fabPosition = const Offset(280, 490);
+  Offset _fabPosition = Offset(79.w, 66.h);
+
+  void _loadInitialFabPosition() async {
+    setState(() {
+      _fabPosition = Offset(MediaQuery.of(context).size.width - 80,
+          MediaQuery.of(context).size.height * 0.7);
+    });
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    setState(() {
+      _fabPosition = _fabPosition + details.delta;
+    });
+  }
+
+  void _clearChatAndResetPdf() {
+    debugPrint('Clearing chat ui for new screen');
+    ref.read(messagesProvider.notifier).clearMessages();
+    ref.read(ChatProviders.uploadedPdfId.notifier).state = '';
+    ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = false;
+    if (ChatProviders.channel != null) {
+      ChatProviders.channel!.sink.close();
+      ChatProviders.channel = null;
+    }
+    // Optionally update the history list to reflect the cleared chat state
+    ref.read(pdfHistoryListProvider.notifier).loadHistory();
   }
 
   @override
@@ -136,6 +167,22 @@ class _ChatViewState extends ConsumerState<ChatView> {
                 bottom: 0,
                 width: sidebarWidth,
                 child: const HistorySidebarView()),
+            Positioned(
+              left: _fabPosition.dx,
+              top: _fabPosition.dy,
+              child: GestureDetector(
+                onPanUpdate: _onPanUpdate,
+                child: FloatingActionButton(
+                  backgroundColor: AppColor.colorBlue,
+                  onPressed: _clearChatAndResetPdf,
+                  child: const Icon(
+                    Icons.add,
+                    size: 39,
+                    color: AppColor.colorWhite,
+                  ),
+                ),
+              ),
+            ),
           ],
         ));
   }

@@ -5,7 +5,7 @@ import 'package:p_chat/global_content/app_color.dart';
 import 'package:p_chat/screens/widgets/text_widget.dart';
 
 class SnackBarView {
-  static void showSnackBar(BuildContext context, String text, {int sec = 2}) {
+  static void showSnackBar(BuildContext context, String text, {int sec = 3}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: AppColor.colorWhite,

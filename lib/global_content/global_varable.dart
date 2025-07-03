@@ -6,3 +6,4 @@ String userNameKey = 'userName';
 String rememberLoginCredentialBoolValueKey = 'rememberLoginCredenTials';
 String userIdKey = 'userId';
 String pdfIdListKey = 'pdfIdListKey';
+int apkVersion = 1;

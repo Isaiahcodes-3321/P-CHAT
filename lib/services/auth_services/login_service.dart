@@ -42,6 +42,7 @@ class LoginApi {
         final userData = responseData['data']['user'] as Map<String, dynamic>;
         String userId = userData['id'] as String;
         String userName = userData['fullname'] as String;
+        int apkVersion = userData["apkv"];
 
         String accessToken = tokenData['access_token'] as String;
         String refreshToken = tokenData['refresh_token'] as String;
