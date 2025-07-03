@@ -72,7 +72,7 @@ class WebSocketConnectionServices {
 
                   String promptFromBackend = '';
                   if (item['prompt'] != null && item['prompt'] is String) {
-                    promptFromBackend = item['prompt'];
+                    promptFromBackend = _extractPromptFromNestedJson(item['prompt']); // Use helper here
                   }
 
                   if (aiResponse.isNotEmpty) {
@@ -158,7 +158,7 @@ class WebSocketConnectionServices {
     }
   }
 
-  // This function is for initial connection when app starts or history is selected
+  // initial connection when app starts or history is selected
   static Future<void> initConnectWebSocket(
       WidgetRef ref, BuildContext context, String pdfId) async {
     String token = await Pref.getStringValue(tokenKey);
@@ -205,7 +205,6 @@ class WebSocketConnectionServices {
           try {
             final List<dynamic> responseList = json.decode(data);
             if (responseList.isNotEmpty) {
-              // Sort messages by created_at to ensure correct order
               responseList.sort((a, b) {
                 final DateTime dateA = DateTime.parse(a['created_at']);
                 final DateTime dateB = DateTime.parse(b['created_at']);
@@ -219,14 +218,14 @@ class WebSocketConnectionServices {
                       item['response'] ??
                       '';
                   String promptQuestion = '';
-                  DateTime messageDate = DateTime.now(); 
+                  DateTime messageDate = DateTime.now();
                   if (item['created_at'] != null) {
                     messageDate = DateTime.parse(item['created_at']);
                   }
 
-                  // Direct access to 'prompt' as a string
+                  // extract the actual prompt from the nested JSON
                   if (item['prompt'] != null && item['prompt'] is String) {
-                    promptQuestion = item['prompt'];
+                    promptQuestion = _extractPromptFromNestedJson(item['prompt']);
                   }
 
                   // Add user message if there's a prompt
@@ -239,7 +238,6 @@ class WebSocketConnectionServices {
                     );
                     ref.read(messagesProvider.notifier).addMessage(userMessage);
                     // Update the history list with the most recent prompt for this PDF
-                    // This is for ensuring history sidebar is up-to-date
                     ref
                         .read(pdfHistoryListProvider.notifier)
                         .updateHistoryItem(pdfId, promptQuestion);
@@ -289,4 +287,16 @@ class WebSocketConnectionServices {
           context, 'Failed to connect to chat history: $e');
     }
   }
+
+  static String _extractPromptFromNestedJson(String jsonString) {
+    try {
+      final Map<String, dynamic> decoded = json.decode(jsonString);
+      if (decoded.containsKey('prompt') && decoded['prompt'] is String) {
+        return decoded['prompt'];
+      }
+    } catch (e) {
+ 
+      debugPrint('Could not parse prompt from JSON. Treating as plain string: $jsonString. Error: $e');
+    }
+    return jsonString; }
 }

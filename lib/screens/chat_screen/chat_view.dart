@@ -38,6 +38,31 @@ class _ChatViewState extends ConsumerState<ChatView> {
     getUserInfo();
     _loadInitialFabPosition();
     _checkPdfHistoryAndConnect();
+    isAppUpdated();
+  }
+
+  Future<void> isAppUpdated() async {
+    try {
+      final getApkVersion = await Pref.getIntValue(apkVersionKey);
+      debugPrint('ApkVersion is $getApkVersion');
+      if (getApkVersion == 1) {
+        // App is updated - do nothing
+        return;
+      } else {
+        if (!mounted) return;
+        Future.delayed(const Duration(seconds: 3), () {
+          if (!mounted) return;
+          ShowMaterialBanner.materialBanner(context);
+          Future.delayed(const Duration(seconds: 4), () {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+            isAppUpdated();
+          });
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking app version: $e');
+    }
   }
 
   Future<void> _checkPdfHistoryAndConnect() async {

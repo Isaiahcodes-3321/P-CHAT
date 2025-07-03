@@ -16,6 +16,31 @@ class SnackBarView {
   }
 }
 
+class ShowMaterialBanner {
+  static void materialBanner(BuildContext context) {
+    ScaffoldMessenger.of(context).showMaterialBanner(
+      MaterialBanner(
+        content: AppText.mediumText('Click to update APK now', FontWeight.bold),
+        backgroundColor: AppColor.colorWhite,
+        // leading: Icon(Icons.info, color: Colors.white),
+        actions: [
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+            },
+            child: const Text(
+              'UPDATE',
+              style: TextStyle(
+                  color: AppColor.colorBlue,
+                  decoration: TextDecoration.underline),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// value holding loading animation across app
 final loadingAnimationSpinkit = StateProvider((ref) => false);
 Widget loadingAnimation() {

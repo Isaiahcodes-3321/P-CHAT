@@ -43,6 +43,7 @@ class LoginApi {
         String userId = userData['id'] as String;
         String userName = userData['fullname'] as String;
         int apkVersion = userData["apkv"];
+        debugPrint('apk Version $apkVersion');
 
         String accessToken = tokenData['access_token'] as String;
         String refreshToken = tokenData['refresh_token'] as String;
@@ -50,6 +51,7 @@ class LoginApi {
         // debugPrint(' Access token its $accessToken');
         debugPrint('User Name its $userName');
         Pref.setStringValue(tokenKey, accessToken);
+        Pref.setIntValue(apkVersionKey, apkVersion);
         Pref.setStringValue(refreshTokenKey, refreshToken);
         Pref.setStringValue(userIdKey, userId);
         Pref.setStringValue(userNameKey, userName);
