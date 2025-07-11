@@ -285,8 +285,6 @@ class WebSocketConnectionServices {
       ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = false;
       ref.read(ChatProviders.isLoading.notifier).state = false;
 
-      // SnackBarView.showSnackBar(
-      //     context, 'Failed to connect to chat history: $e');
     }
   }
 

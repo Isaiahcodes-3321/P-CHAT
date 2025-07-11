@@ -225,16 +225,6 @@ class LogOutUser {
   static logUserOut(WidgetRef ref, BuildContext context) async {
     await Pref.setStringValue(tokenKey, '');
     await Pref.setStringValue(userNameKey, '');
-    // Clear PDF history on logout
-    // await Pref.setStringListValue(pdfIdListKey, []);
-    // Also clear all individual last question entries
-    // final SharedPreferences prefs = await SharedPreferences.getInstance();
-    // final allKeys = prefs.getKeys();
-    // for (String key in allKeys) {
-    //   if (key.startsWith('lastQuestion_')) {
-    //     await prefs.remove(key);
-    //   }
-    // }
     Navigator.pushReplacement<void, void>(
       context,
       MaterialPageRoute<void>(
@@ -244,14 +234,3 @@ class LogOutUser {
     ref.read(loadingAnimationSpinkit.notifier).state = false;
   }
 }
-
-
-
- // leading: Center(
-          //   child: AppText.boldText(
-          //     " Good",
-          //     FontWeight.bold,
-          //     fontSize: FontSize.font20,
-          //     color: AppColor.colorWhite,
-          //   ),
-          // ),
