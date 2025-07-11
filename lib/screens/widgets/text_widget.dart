@@ -11,7 +11,7 @@ class FontSize {
 }
 
 class AppText {
-  static String familyFont = 'BodoniModa-VariableFont_opsz,wght';
+  static String familyFont = 'Inter-VariableFont_opsz,wght.ttf';
 
   static Text boldText(String text, FontWeight fontWeight,
       {double? fontSize,

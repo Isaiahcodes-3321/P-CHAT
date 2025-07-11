@@ -2,7 +2,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/models/forgot_password_model.dart';
 import 'package:p_chat/screens/auth_screen/export.dart';
-import 'package:p_chat/services/forgot_password_service.dart';
+import 'package:p_chat/services/auth_services/forgot_password_service.dart';
 
 class ForgotPasswordView extends ConsumerStatefulWidget {
   const ForgotPasswordView({Key? key}) : super(key: key);

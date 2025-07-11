@@ -2,7 +2,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/models/verify_emailotp_model.dart';
 import 'package:p_chat/screens/auth_screen/export.dart';
-import 'package:p_chat/services/verify_emailotp_service.dart';
+import 'package:p_chat/services/auth_services/verify_emailotp_service.dart';
 import 'package:pinput/pinput.dart';
 
 class RegisterOtpView extends ConsumerStatefulWidget {

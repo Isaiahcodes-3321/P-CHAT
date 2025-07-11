@@ -1,7 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:p_chat/models/verify_emailotp_model.dart';
 import 'package:p_chat/screens/auth_screen/login_view.dart';
-import 'export.dart';
+import '../export.dart';
 
 class VerifyEmailOtpApi {
   static Future<void> verifyOtp(WidgetRef ref,

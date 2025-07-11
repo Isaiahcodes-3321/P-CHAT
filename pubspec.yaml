@@ -31,6 +31,7 @@ dependencies:
   intl: ^0.20.2
   web_socket_channel: ^3.0.3
   flutter_launcher_icons: ^0.14.4
+  url_launcher: ^6.3.1
   
 
 flutter_launcher_icons:
@@ -64,9 +65,9 @@ flutter:
 
  
   fonts:
-    - family: BodoniModa-VariableFont_opsz,wght
+    - family: Inter-VariableFont_opsz,wght.ttf
       fonts:
-        - asset: font/BodoniModa-VariableFont_opsz,wght.ttf
+        - asset: font/Inter-VariableFont_opsz,wght.ttf
         # - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro

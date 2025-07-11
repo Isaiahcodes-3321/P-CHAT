@@ -3,7 +3,7 @@ import 'package:p_chat/global_content/internet_checks.dart';
 import 'package:p_chat/global_content/snack_bar.dart';
 import 'package:p_chat/models/registration_model.dart';
 import 'package:p_chat/screens/auth_screen/login_view.dart';
-import 'package:p_chat/services/registration_service.dart';
+import 'package:p_chat/services/auth_services/registration_service.dart';
 
 import '../export.dart';
 

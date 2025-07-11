@@ -18,6 +18,10 @@ P-Chat is your intelligent, AI-powered PDF assistant designed to simplify comple
 | **Chat Page** | ![Screenshot 2](p-chat_image/Chatview.jpg) | The core AI chat interface for PDF interaction.|
 | **AI response** | ![Screenshot 2](p-chat_image/Airesposne.jpg)   | Response from AI |
 
+* ** Download APK file for android** 
+    download any of the android APK version here
+    * [Download APK file](https://1drv.ms/f/s!Apzcq6G-17KWhAEjtOAStkW-ZRO4)
+
 ## How to Clone and Run Locally
 
 Follow these simple steps to get P-Chat up and running on your local machine.
@@ -37,7 +41,7 @@ Before you begin, ensure you have the following installed:
     Open your terminal or command prompt and run the following command to clone the P-Chat repository:
 
     ```bash
-    git clone [https://github.com/YOUR_USERNAME/P_CHAT.git](https://github.com/YOUR_USERNAME/P_CHAT.git)
+    git clone [https://github.com/Isaiahcodes-3321/P-CHAT.git](https://github.com/Isaiahcodes-3321/P-CHAT.git)
  
 
 2.  **Navigate to the Project Directory:**

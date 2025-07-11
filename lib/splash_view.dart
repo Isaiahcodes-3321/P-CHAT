@@ -31,7 +31,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
       String yourToken = token.trim();
       debugPrint('Token its $yourToken');
 
-      if (yourToken.isEmpty || yourToken == 'null' || yourToken.length < 10) {
+      if (yourToken.isEmpty || yourToken == 'null' || yourToken.length < 20) {
         debugPrint('User token its empty or invalid token :$yourToken');
         navigateToLogin();
         return;
