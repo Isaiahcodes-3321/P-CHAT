@@ -45,7 +45,6 @@ class WebSocketConnectionServices {
       debugPrint('Pdf ID : $pdfId');
 
       ChatProviders.channel = WebSocketChannel.connect(wsUrl);
-      // SnackBarView.showSnackBar(context, 'Connecting to chat...');
       await ChatProviders.channel!.ready;
 
       ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = true;
@@ -55,35 +54,31 @@ class WebSocketConnectionServices {
       SnackBarView.showSnackBar(context, 'Connected to chat!');
       debugPrint('Connected to chat');
 
+      String currentStreamingMessage = '';
+      Message? currentStreamingMessageObj;
+
       ChatProviders.channel!.stream.listen(
         (data) {
           debugPrint('Received WebSocket data: $data');
           debugPrint('Pdf ID Save: $pdfId');
           try {
-            final List<dynamic> responseList = json.decode(data);
-            if (responseList.isNotEmpty) {
-              for (var item in responseList) {
-                if (item is Map<String, dynamic>) {
-                  String aiResponse = item['ai_response'] ??
-                      item['message'] ??
-                      item['response'] ??
-                      '';
+            if (data.toString().contains('"ai_response"')) {
+              final List<dynamic> responseList = json.decode(data);
+              if (responseList.isNotEmpty) {
+                for (var item in responseList) {
+                  if (item is Map<String, dynamic>) {
+                    String aiResponse = item['ai_response'] ??
+                        item['message'] ??
+                        item['response'] ??
+                        '';
 
-                  String promptFromBackend = '';
-                  if (item['prompt'] != null && item['prompt'] is String) {
-                    promptFromBackend = _extractPromptFromNestedJson(
-                        item['prompt']); // Use helper here
-                  }
+                    String promptFromBackend = '';
+                    if (item['prompt'] != null && item['prompt'] is String) {
+                      promptFromBackend =
+                          _extractPromptFromNestedJson(item['prompt']);
+                    }
 
-                  if (aiResponse.isNotEmpty) {
-                    final aiMessage = Message(
-                      text: aiResponse,
-                      date: DateTime.now(),
-                      pdfId: pdfId,
-                      isSentByMe: false,
-                    );
-                    addMessageToUi(aiMessage);
-                    if (promptFromBackend.isNotEmpty) {
+                    if (aiResponse.isNotEmpty && promptFromBackend.isNotEmpty) {
                       ref
                           .read(pdfHistoryListProvider.notifier)
                           .updateHistoryItem(pdfId, promptFromBackend);
@@ -91,9 +86,30 @@ class WebSocketConnectionServices {
                   }
                 }
               }
+              currentStreamingMessage = '';
+              currentStreamingMessageObj = null;
             } else {
-              debugPrint(
-                  'Received empty list from WebSocket. No messages to display yet.');
+              if (currentStreamingMessageObj == null) {
+                currentStreamingMessage = data.toString();
+                currentStreamingMessageObj = Message(
+                  text: currentStreamingMessage,
+                  date: DateTime.now(),
+                  pdfId: pdfId,
+                  isSentByMe: false,
+                );
+                addMessageToUi(currentStreamingMessageObj!);
+              } else {
+                currentStreamingMessage += data.toString();
+                currentStreamingMessageObj = Message(
+                  text: currentStreamingMessage,
+                  date: currentStreamingMessageObj!.date,
+                  pdfId: pdfId,
+                  isSentByMe: false,
+                );
+                ref
+                    .read(messagesProvider.notifier)
+                    .updateLastMessage(currentStreamingMessageObj!);
+              }
             }
 
             ref.read(ChatProviders.isLoading.notifier).state = false;
@@ -116,12 +132,16 @@ class WebSocketConnectionServices {
           ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = false;
           ref.read(ChatProviders.isLoading.notifier).state = false;
           SnackBarView.showSnackBar(context, 'Chat disconnected.');
+          currentStreamingMessage = '';
+          currentStreamingMessageObj = null;
         },
         onError: (error) {
           debugPrint('WebSocket error: $error');
           ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = false;
           ref.read(ChatProviders.isLoading.notifier).state = false;
           SnackBarView.showSnackBar(context, 'Chat error: $error');
+          currentStreamingMessage = '';
+          currentStreamingMessageObj = null;
         },
         cancelOnError: false,
       );
@@ -131,7 +151,6 @@ class WebSocketConnectionServices {
       ref.read(ChatProviders.isLoading.notifier).state = false;
       debugPrint(
           '2 is connected to websocket ${ref.read(ChatProviders.isConnectedToWebSocket)}');
-      // SnackBarView.showSnackBar(context, 'Failed to connect to chat: $e');
     }
   }
 
@@ -158,13 +177,11 @@ class WebSocketConnectionServices {
     }
   }
 
-  // initial connection when app starts or history is selected
   static Future<void> initConnectWebSocket(
       WidgetRef ref, BuildContext context, String pdfId) async {
     String token = await Pref.getStringValue(tokenKey);
     String _accessToken = token.trim();
 
-    // Clear existing messages when loading a new history chat
     ref.read(messagesProvider.notifier).clearMessages();
 
     String tokenForWs = _accessToken.startsWith('Bearer ')
@@ -178,7 +195,6 @@ class WebSocketConnectionServices {
     debugPrint('History pdf Id : $pdfId');
 
     try {
-      // Close previous connection if exists
       if (ChatProviders.channel != null) {
         await ChatProviders.channel!.sink
             .close(1000, 'Reconnecting for history');
@@ -193,72 +209,100 @@ class WebSocketConnectionServices {
       debugPrint(
           'Is connected to websocket ${ref.read(ChatProviders.isConnectedToWebSocket)}');
 
-      // SnackBarView.showSnackBar(context, 'Connected to chat history!');
       debugPrint('Connected to chat history');
       ref.read(ChatProviders.isLoading.notifier).state = false;
       ref.read(ChatProviders.uploadedPdfId.notifier).state = pdfId;
 
-      // Listen to the stream for messages specific to history (initial load)
+      String currentStreamingMessage = '';
+      Message? currentStreamingMessageObj;
+
       ChatProviders.channel!.stream.listen(
         (data) {
           debugPrint('Received WebSocket history data: $data');
           try {
-            final List<dynamic> responseList = json.decode(data);
-            if (responseList.isNotEmpty) {
-              responseList.sort((a, b) {
-                final DateTime dateA = DateTime.parse(a['created_at']);
-                final DateTime dateB = DateTime.parse(b['created_at']);
-                return dateA.compareTo(dateB);
-              });
+            if (data.toString().contains('"ai_response"')) {
+              final List<dynamic> responseList = json.decode(data);
+              if (responseList.isNotEmpty) {
+                responseList.sort((a, b) {
+                  final DateTime dateA = DateTime.parse(a['created_at']);
+                  final DateTime dateB = DateTime.parse(b['created_at']);
+                  return dateA.compareTo(dateB);
+                });
 
-              for (var item in responseList) {
-                if (item is Map<String, dynamic>) {
-                  String aiResponse = item['ai_response'] ??
-                      item['message'] ??
-                      item['response'] ??
-                      '';
-                  String promptQuestion = '';
-                  DateTime messageDate = DateTime.now();
-                  if (item['created_at'] != null) {
-                    messageDate = DateTime.parse(item['created_at']);
-                  }
+                for (var item in responseList) {
+                  if (item is Map<String, dynamic>) {
+                    String aiResponse = item['ai_response'] ??
+                        item['message'] ??
+                        item['response'] ??
+                        '';
+                    String promptQuestion = '';
+                    DateTime messageDate = DateTime.now();
+                    if (item['created_at'] != null) {
+                      messageDate = DateTime.parse(item['created_at']);
+                    }
 
-                  // extract the actual prompt from the nested JSON
-                  if (item['prompt'] != null && item['prompt'] is String) {
-                    promptQuestion =
-                        _extractPromptFromNestedJson(item['prompt']);
-                  }
+                    if (item['prompt'] != null && item['prompt'] is String) {
+                      promptQuestion =
+                          _extractPromptFromNestedJson(item['prompt']);
+                    }
 
-                  // Add user message if there's a prompt
-                  if (promptQuestion.isNotEmpty) {
-                    final userMessage = Message(
-                      text: promptQuestion,
-                      date: messageDate,
-                      pdfId: pdfId,
-                      isSentByMe: true,
-                    );
-                    ref.read(messagesProvider.notifier).addMessage(userMessage);
-                    // Update the history list with the most recent prompt for this PDF
-                    ref
-                        .read(pdfHistoryListProvider.notifier)
-                        .updateHistoryItem(pdfId, promptQuestion);
-                  }
+                    if (promptQuestion.isNotEmpty) {
+                      final userMessage = Message(
+                        text: promptQuestion,
+                        date: messageDate,
+                        pdfId: pdfId,
+                        isSentByMe: true,
+                      );
+                      ref
+                          .read(messagesProvider.notifier)
+                          .addMessage(userMessage);
+                      ref
+                          .read(pdfHistoryListProvider.notifier)
+                          .updateHistoryItem(pdfId, promptQuestion);
+                    }
 
-                  if (aiResponse.isNotEmpty) {
-                    final aiMessage = Message(
-                      text: aiResponse,
-                      date: messageDate,
-                      pdfId: pdfId,
-                      isSentByMe: false,
-                    );
-                    ref.read(messagesProvider.notifier).addMessage(aiMessage);
+                    if (aiResponse.isNotEmpty) {
+                      final aiMessage = Message(
+                        text: aiResponse,
+                        date: messageDate,
+                        pdfId: pdfId,
+                        isSentByMe: false,
+                      );
+                      ref.read(messagesProvider.notifier).addMessage(aiMessage);
+                    }
                   }
                 }
+              } else {
+                debugPrint('Received empty history list from WebSocket.');
+                SnackBarView.showSnackBar(
+                    context, 'No previous chats found for this PDF.');
               }
+              currentStreamingMessage = '';
+              currentStreamingMessageObj = null;
             } else {
-              debugPrint('Received empty history list from WebSocket.');
-              SnackBarView.showSnackBar(
-                  context, 'No previous chats found for this PDF.');
+              if (currentStreamingMessageObj == null) {
+                currentStreamingMessage = data.toString();
+                currentStreamingMessageObj = Message(
+                  text: currentStreamingMessage,
+                  date: DateTime.now(),
+                  pdfId: pdfId,
+                  isSentByMe: false,
+                );
+                ref
+                    .read(messagesProvider.notifier)
+                    .addMessage(currentStreamingMessageObj!);
+              } else {
+                currentStreamingMessage += data.toString();
+                currentStreamingMessageObj = Message(
+                  text: currentStreamingMessage,
+                  date: currentStreamingMessageObj!.date,
+                  pdfId: pdfId,
+                  isSentByMe: false,
+                );
+                ref
+                    .read(messagesProvider.notifier)
+                    .updateLastMessage(currentStreamingMessageObj!);
+              }
             }
           } catch (e) {
             debugPrint(
@@ -271,12 +315,16 @@ class WebSocketConnectionServices {
           debugPrint('WebSocket history connection closed');
           ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = false;
           ref.read(ChatProviders.isLoading.notifier).state = false;
+          currentStreamingMessage = '';
+          currentStreamingMessageObj = null;
         },
         onError: (error) {
           debugPrint('WebSocket history error: $error');
           ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = false;
           ref.read(ChatProviders.isLoading.notifier).state = false;
           SnackBarView.showSnackBar(context, 'Chat history error: $error');
+          currentStreamingMessage = '';
+          currentStreamingMessageObj = null;
         },
         cancelOnError: false,
       );
@@ -284,7 +332,6 @@ class WebSocketConnectionServices {
       debugPrint('Failed to connect WebSocket for history: $e');
       ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = false;
       ref.read(ChatProviders.isLoading.notifier).state = false;
-
     }
   }
 

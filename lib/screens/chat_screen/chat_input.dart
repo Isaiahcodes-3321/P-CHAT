@@ -219,7 +219,6 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
         ChatProviders.channel == null) {
       debugPrint('WebSocket not connected. Attempting to reconnect...');
       SnackBarView.showSnackBar(context, 'Connecting to chat...');
-      // Reconnect via the service
       await WebSocketConnectionServices.connectWebSocket(
         uploadedPdfId,
         ref,
@@ -229,7 +228,6 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
           ref.read(messagesProvider.notifier).addMessage(message);
         },
       );
-      // After attempting to connect, check if connection is still not established
       if (!ref.read(ChatProviders.isConnectedToWebSocket)) {
         SnackBarView.showSnackBar(
             context, 'Failed to connect to chat. Try again.');
@@ -351,7 +349,9 @@ class _ChatPreviewState extends ConsumerState<ChatPreview> {
             Text(
               DateFormat('HH:mm').format(message.date),
               style: TextStyle(
-                color: message.isSentByMe ? Colors.white70 : const Color.fromARGB(255, 97, 97, 97),
+                color: message.isSentByMe
+                    ? Colors.white70
+                    : const Color.fromARGB(255, 97, 97, 97),
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 fontFamily: AppText.familyFont,
