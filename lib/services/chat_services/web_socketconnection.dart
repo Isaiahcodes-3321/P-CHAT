@@ -186,7 +186,7 @@ class WebSocketConnectionServices {
       }
 
       ChatProviders.channel = WebSocketChannel.connect(wsUrl);
-      // SnackBarView.showSnackBar(context, 'Connecting to chat history...');
+      SnackBarView.showSnackBar(context, 'Connecting to chat history...');
       await ChatProviders.channel!.ready;
 
       ref.read(ChatProviders.isConnectedToWebSocket.notifier).state = true;

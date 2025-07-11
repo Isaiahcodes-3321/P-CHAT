@@ -3,9 +3,9 @@
  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <application
-        android:label="p_chat"
+        android:label="P Chat"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/apkimg">
         <activity
             android:name=".MainActivity"
             android:exported="true"
