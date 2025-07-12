@@ -14,7 +14,6 @@ import 'package:p_chat/services/chat_services/web_socketconnection.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
-
 final pdfHistoryListProvider =
     StateNotifierProvider<PdfHistoryListNotifier, List<Map<String, String>>>(
         (ref) => PdfHistoryListNotifier());
@@ -121,6 +120,8 @@ class HistorySidebarView extends ConsumerStatefulWidget {
 }
 
 class _HistorySidebarViewState extends ConsumerState<HistorySidebarView> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -316,7 +317,21 @@ class _HistorySidebarViewState extends ConsumerState<HistorySidebarView> {
                                     // Connect to WebSocket with the selected PDF ID
                                     await WebSocketConnectionServices
                                         .initConnectWebSocket(
-                                            ref, context, pdfId);
+                                      ref,
+                                      context,
+                                      pdfId,
+                                      onScrollToBottom: () {
+                                        if (_scrollController.hasClients) {
+                                          _scrollController.animateTo(
+                                            _scrollController
+                                                .position.maxScrollExtent,
+                                            duration: const Duration(
+                                                milliseconds: 300),
+                                            curve: Curves.easeOut,
+                                          );
+                                        }
+                                      },
+                                    );
                                   },
                                 ),
                               );

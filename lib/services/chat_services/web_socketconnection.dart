@@ -178,7 +178,8 @@ class WebSocketConnectionServices {
   }
 
   static Future<void> initConnectWebSocket(
-      WidgetRef ref, BuildContext context, String pdfId) async {
+      WidgetRef ref, BuildContext context, String pdfId,
+      {required VoidCallback onScrollToBottom}) async {
     String token = await Pref.getStringValue(tokenKey);
     String _accessToken = token.trim();
 
@@ -272,6 +273,7 @@ class WebSocketConnectionServices {
                     }
                   }
                 }
+                onScrollToBottom();
               } else {
                 debugPrint('Received empty history list from WebSocket.');
                 SnackBarView.showSnackBar(
@@ -303,6 +305,7 @@ class WebSocketConnectionServices {
                     .read(messagesProvider.notifier)
                     .updateLastMessage(currentStreamingMessageObj!);
               }
+              onScrollToBottom();
             }
           } catch (e) {
             debugPrint(

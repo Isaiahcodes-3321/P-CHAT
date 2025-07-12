@@ -21,6 +21,7 @@ class ChatView extends ConsumerStatefulWidget {
 }
 
 class _ChatViewState extends ConsumerState<ChatView> {
+  final ScrollController _scrollController = ScrollController();
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 12) {
@@ -74,7 +75,19 @@ class _ChatViewState extends ConsumerState<ChatView> {
       debugPrint('Found last Pdf ID in history: $lastPdfId');
       ref.read(ChatProviders.uploadedPdfId.notifier).state = lastPdfId;
       await WebSocketConnectionServices.initConnectWebSocket(
-          ref, context, lastPdfId);
+        ref,
+        context,
+        lastPdfId,
+        onScrollToBottom: () {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        },
+      );
 
       await ref.read(pdfHistoryListProvider.notifier).loadHistory();
     }
