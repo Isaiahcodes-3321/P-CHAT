@@ -14,6 +14,7 @@ import 'package:p_chat/services/chat_services/web_socketconnection.dart';
 import 'package:p_chat/srorage/pref_storage.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
+
 final pdfHistoryListProvider =
     StateNotifierProvider<PdfHistoryListNotifier, List<Map<String, String>>>(
         (ref) => PdfHistoryListNotifier());
@@ -113,14 +114,18 @@ class PdfHistoryListNotifier extends StateNotifier<List<Map<String, String>>> {
 }
 
 class HistorySidebarView extends ConsumerStatefulWidget {
-  const HistorySidebarView({Key? key}) : super(key: key);
+  final ScrollController? chatScrollController; // Add this parameter
+  
+  const HistorySidebarView({
+    Key? key,
+    this.chatScrollController, // Add this parameter
+  }) : super(key: key);
 
   @override
   ConsumerState<HistorySidebarView> createState() => _HistorySidebarViewState();
 }
 
 class _HistorySidebarViewState extends ConsumerState<HistorySidebarView> {
-  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -130,6 +135,19 @@ class _HistorySidebarViewState extends ConsumerState<HistorySidebarView> {
 
   Future<void> _loadHistory() async {
     await ref.read(pdfHistoryListProvider.notifier).loadHistory();
+  }
+
+  // Auto scroll function
+  void _scrollToBottom() {
+    if (widget.chatScrollController != null && widget.chatScrollController!.hasClients) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        widget.chatScrollController!.animateTo(
+          widget.chatScrollController!.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      });
+    }
   }
 
   @override
@@ -279,11 +297,11 @@ class _HistorySidebarViewState extends ConsumerState<HistorySidebarView> {
                                             DeleteChatsServices.deleteChat(
                                                 ref, context, pdfId);
 
-                                            //  clear the chat messages or reset the active PDF.
+                                            //  clear the chat messages or reset the active PDF.
                                             // Example:
                                             // if (ref.read(ChatProviders.uploadedPdfId) == pdfId) {
-                                            //   ref.read(ChatProviders.messages.notifier).state = []; // Clear chat messages
-                                            //   ref.read(ChatProviders.uploadedPdfId.notifier).state = ''; // Clear active PDF ID
+                                            //   ref.read(ChatProviders.messages.notifier).state = []; // Clear chat messages
+                                            //   ref.read(ChatProviders.uploadedPdfId.notifier).state = ''; // Clear active PDF ID
                                             // }
                                           });
                                         },
@@ -305,33 +323,36 @@ class _HistorySidebarViewState extends ConsumerState<HistorySidebarView> {
                                   ),
                                   onTap: () async {
                                     debugPrint('Tapped on PDF ID: $pdfId');
+                                    
+                                    // IMPORTANT: Clear existing messages first to prevent duplicates
+                                    ref.read(messagesProvider.notifier).clearMessages();
+                                    
+                                    // Set the active PDF ID
                                     ref
                                         .read(ChatProviders
                                             .uploadedPdfId.notifier)
                                         .state = pdfId;
+                                    
                                     // Hide the sidebar after selecting a history item
                                     ref
                                         .read(ProviderUserDetails
                                             .showHistorySidebar.notifier)
                                         .state = false;
+                                    
+                                    // Add a small delay to ensure UI updates
+                                    await Future.delayed(const Duration(milliseconds: 100));
+                                    
                                     // Connect to WebSocket with the selected PDF ID
                                     await WebSocketConnectionServices
                                         .initConnectWebSocket(
                                       ref,
                                       context,
                                       pdfId,
-                                      onScrollToBottom: () {
-                                        if (_scrollController.hasClients) {
-                                          _scrollController.animateTo(
-                                            _scrollController
-                                                .position.maxScrollExtent,
-                                            duration: const Duration(
-                                                milliseconds: 300),
-                                            curve: Curves.easeOut,
-                                          );
-                                        }
-                                      },
+                                      onScrollToBottom: _scrollToBottom,
                                     );
+                                    
+                                    // Auto scroll to bottom after loading history
+                                    _scrollToBottom();
                                   },
                                 ),
                               );
